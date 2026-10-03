@@ -20,6 +20,8 @@
 
 ## 1. Дисплей
 
+<img src="doc/images/model02.png"/>
+
 <img src="doc/images/thermostat_screen.jpg"/>
 
 ### Обычный режим (термостат включён)
