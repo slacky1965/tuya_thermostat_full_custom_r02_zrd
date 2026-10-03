@@ -45,11 +45,11 @@ PROJ := osrctherm_r02_$(APP_VER_STR)_CA51F253L3
 #   make flash-cachip PORT=COM7    -> uploads to COM7
 PYTHON     ?= py
 PORT       ?= COM4
-CACHIP_ISP := ../tools/cachip-isp-serial_new.py
-MAKE_OTA   := ../tools/make_ca51f2_ota.py
+CACHIP_ISP := ./tools/cachip-isp-serial_new.py
+MAKE_OTA   := ./tools/make_ca51f2_ota.py
 # Prints used/limit from the .mem file when a link overflows (sdld writes the
 # numbers there but prints only the bare "?ASlink-Error-Insufficient" lines).
-MEM_REPORT := ../tools/mem_report.py
+MEM_REPORT := ./tools/mem_report.py
 ORIG_FW	   := ../bin/orig/firmware_CA51F2_orig.bin
 
 BUILD := build
@@ -81,8 +81,8 @@ $(FLASHER_IHX): $(FLASHER_SRC) $(HDRS) | $(BUILD)
 	@rm -f $(FLASHER_IHX:.ihx=.mem)
 	$(SDCC) $(FLASHER_FLAGS) $< -o $@ || { $(PYTHON) $(MEM_REPORT) $(FLASHER_IHX:.ihx=.mem); exit 1; }
 
-$(FLASHER_BLOB): $(FLASHER_IHX) ../tools/make_flasher_blob.py
-	$(PYTHON) ../tools/make_flasher_blob.py $< $@
+$(FLASHER_BLOB): $(FLASHER_IHX) ./tools/make_flasher_blob.py
+	$(PYTHON) ./tools/make_flasher_blob.py $< $@
 
 $(BUILD)/flasher_blob.rel: $(FLASHER_BLOB) $(HDRS) | $(BUILD)
 	$(SDCC) $(SDCCFLAGS) -c $< -o $@
