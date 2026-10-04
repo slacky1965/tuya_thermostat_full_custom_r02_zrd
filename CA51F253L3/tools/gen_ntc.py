@@ -61,22 +61,22 @@ def arrays_text(codes, temps):
     return "\n".join(out) + "\n"
 
 def patch_temp_c(text, block):
-    """Replace the generated block between markers in sensor_ntc.c."""
+    """Replace the generated block between markers in sensor_ntc_gen.c."""
     m1 = text.index("/* >>> GENERATED-BEGIN")
     m2 = text.index("/* >>> GENERATED-END")
     tail = text.index("\n", m2) + 1
     head = text[:m1]
-    new = ("/* >>> GENERATED-BEGIN (auto-generated: tools/gen_ntc.py) >>> */\n"
+    new = ("/* >>> GENERATED-BEGIN (auto-generated: CA51F253L3/tools/gen_ntc.py) >>> */\n"
            + block +
            "/* >>> GENERATED-END */\n")
     return head + new + text[tail:]
-    # NOTE: markers must already be present in source/sensor_ntc.c.
+    # NOTE: markers must already be present in sensor_ntc_gen.c.
 
 def main():
     codes, temps = build()
     block = arrays_text(codes, temps)
     if "--file" in sys.argv:
-        path = r"CA51F2_test_LED/source/sensor_ntc.c"
+        path = r"sensor_ntc_gen.c"
         with open(path, "r", encoding="utf-8") as f:
             text = f.read()
         text = patch_temp_c(text, block)
