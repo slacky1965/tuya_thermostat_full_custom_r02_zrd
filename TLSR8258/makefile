@@ -155,10 +155,10 @@ flash: $(BIN_FILE)
 	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m we 0x8000 $(BIN_FILE)
 
 flash-orig-write:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m we 0 $(BIN_PATH)/firmware_ZT3L_TZE204_aoclfnxz.bin
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m we 0 $(BIN_PATH)/orig/firmware_ZT3L_TZE204_orig.bin
 	
 flash-orig-read:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m rf 0 0x100000 firmware_ZT3L_TZE204_aoclfnxz.bin
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m rf 0 0x100000 firmware_ZT3L_TZE204_orig.bin
 	
 erase-flash:
 	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s ea
@@ -213,7 +213,7 @@ $(BIN_FILE): $(ELF_FILE)
 	@python3 $(TL_CHECK) $(BIN_FILE)
 	@cp $(BIN_FILE) $(BIN_PATH)/$(PROJECT_NAME)_$(VERSION_RELEASE).$(VERSION_BUILD)_ZT3L.bin
 	@echo 'Create zigbee OTA file'
-	@python3 $(MAKE_OTA) -ot $(PROJECT_NAME)_ZT3L $(BIN_PATH)/$(PROJECT_NAME)_$(VERSION_RELEASE).$(VERSION_BUILD)_ZT3L.bin
+	@python3 $(MAKE_OTA) -ot $(PROJECT_NAME)_$(VERSION_RELEASE).$(VERSION_BUILD)_ZT3L $(BIN_PATH)/$(PROJECT_NAME)_$(VERSION_RELEASE).$(VERSION_BUILD)_ZT3L.bin
 	@echo 'Create zigbee Tuya OTA file'
 	@python3 $(MAKE_OTA_TUYA) -m 4417 -t 54179 -o $(BIN_PATH)/1141-d3a3-1111114b-$(PROJECT_NAME)_ZT3L.zigbee $(BIN_FILE) $(BOOT_FILE)
 	@echo ' '
