@@ -15,3 +15,10 @@
 - [Telink IoT Studio](https://doc.telink-semi.cn/tools/telink_iot_studio/TelinkIoTStudio_V2025.2.zip) (обязательно)
 - [Git for Windows](https://git-scm.com/install/windows?ref=faun) (рекомендуется)
 
+После установки всех компонентов запускаем Git Bash и в переходим в папку проекта. Далее выполняем последовательно
+
+- `make clean`
+- `make bootloader`
+- `make clean`
+- `make all`
+
