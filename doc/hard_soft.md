@@ -13,3 +13,9 @@
 
 <img src="images/board_bottom.jpg"/>
 
+Для сборки проекта под Windows нужно скачать несколько интсрументов.
+
+- [SDCC](https://sdcc.sourceforge.net/snap.php) (обязательно)
+- [Telink IoT Studio](https://doc.telink-semi.cn/tools/telink_iot_studio/TelinkIoTStudio_V2025.2.zip) (обязательно)
+- [Git for Windows](https://git-scm.com/install/windows?ref=faun) (рекомендуется)
+
