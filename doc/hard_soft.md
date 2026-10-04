@@ -2,7 +2,7 @@
 
 ## Схема термостата.
 
-<img src="images/schematic_high.jpg" alt="image" width="15%" height="auto"> <img src="images/schematic_low.jpg" alt="image" width="15%" height="auto" />
+<img src="images/schematic_high.jpg" alt="image" width="20%" height="auto"> <img src="images/schematic_low.jpg" alt="image" width="20%" height="auto" />
 
 
 ## Слаботочная плата термостата с экраном.
