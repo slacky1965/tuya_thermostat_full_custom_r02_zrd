@@ -7,7 +7,7 @@
 
 ## Слаботочная плата термостата с экраном.
 
-<img src="images/board_top.jpg" alt="image" width="17%" height="auto"> <img src="images/board_bottom.jpg" alt="image" width="17%" height="auto" />
+<img src="images/board_top.jpg" alt="image" width="18%" height="auto"> <img src="images/board_bottom.jpg" alt="image" width="18%" height="auto" />
 
 Для сборки проекта под Windows нужно скачать несколько инструментов.
 
