@@ -17,7 +17,7 @@
 
 После установки всех компонентов запускаем Git Bash и в переходим в папку проекта. Далее выполняем последовательно
 
-- `make clean`
+- ```make clean```
 - `make bootloader`
 - `make clean`
 - `make all`
