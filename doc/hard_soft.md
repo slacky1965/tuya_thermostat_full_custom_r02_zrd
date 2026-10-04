@@ -2,14 +2,14 @@
 
 ## Схема термостата.
 
-<img src="doc/images/schematic_high.jpg"/>
+<img src="images/schematic_high.jpg"/>
 
-<img src="doc/images/schematic_low.jpg"/>
+<img src="images/schematic_low.jpg"/>
 
 
 ## Слаботочная плата термостата с экраном.
 
-<img src="doc/images/board_top.jpg"/>
+<img src="images/board_top.jpg"/>
 
-<img src="doc/images/board_bottom.jpg"/>
+<img src="images/board_bottom.jpg"/>
 
