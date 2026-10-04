@@ -2,15 +2,12 @@
 
 ## Схема термостата.
 
-<img src="images/schematic_high.jpg" alt="image" width="15%" height="auto" />
-
-<img src="images/schematic_low.jpg" alt="image" width="15%" height="auto" />
+<img src="images/schematic_high.jpg" alt="image" width="15%" height="auto"> <img src="images/schematic_low.jpg" alt="image" width="15%" height="auto" />
 
 
 ## Слаботочная плата термостата с экраном.
 
-<img src="images/board_top.jpg" alt="image" width="15%" height="auto" />
-<img src="images/board_bottom.jpg" alt="image" width="15%" height="auto" />
+<img src="images/board_top.jpg" alt="image" width="15%" height="auto"> <img src="images/board_bottom.jpg" alt="image" width="15%" height="auto" />
 
 Для сборки проекта под Windows нужно скачать несколько инструментов.
 
