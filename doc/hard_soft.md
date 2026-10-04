@@ -17,11 +17,12 @@
 
 После установки всех компонентов запускаем Git Bash и в переходим в папку проекта. Далее выполняем последовательно
 
-- 
 ```
-make clean
+make clean bootloader
 ```
-- `make bootloader`
-- `make clean`
-- `make all`
 
+и затем
+
+```
+make clean all
+```
