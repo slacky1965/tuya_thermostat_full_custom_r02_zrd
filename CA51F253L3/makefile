@@ -12,6 +12,14 @@ PACKIHX  := packihx
 MAKEBIN  := makebin
 CP       := cp
 
+# Resolve 'sh' from PATH. This make.exe would otherwise reuse the legacy
+# MSYS-1 sh.exe sitting in its own directory (C:/TelinkSDK/bin), whose argv
+# quoting is incompatible with the MSYS-2 sed shipped with Git for Windows:
+# the sed script arrives corrupted, APP_VER_HEX comes out empty and parsing
+# stops at 'APP_VERSION not found'. With SHELL set, the shell and the sed
+# always come from the same PATH (Git sh in Git Bash, Git sh in PowerShell).
+SHELL := sh
+
 # Make the toolchain reachable even when the invoking IDE (e.g. Eclipse) does
 # not include it in PATH. Recipes run under MSYS /bin/sh, so the prepended
 # entries use POSIX form (':' separated); 'C:/x' maps to '/c/x'.
