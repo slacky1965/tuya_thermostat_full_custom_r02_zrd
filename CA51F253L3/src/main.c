@@ -285,7 +285,24 @@ static void Sched_Set_Leave(void) {
 	DEBUG(BUTTONS_EN, { debug_puts("sched leave\r\n"); });
 }
 
-/*********************************************************************************************************************/
+/**********************************************************************************************************************/
+/* One synchronous probe pass shared by the boot path and the 1 s tick: read both probes and feed the temperature     */
+/* pipeline (per-sensor calibration applied). main() runs it BEFORE the first paint, so the restored ON screen never  */
+/* shows "Er" while the pipeline is still empty (the first 1 s tick would arrive a second later); the tick calls it   */
+/* every second, keeping a single place where the probes are read.                                                    */
+static void Temp_MeasureProbes(void) {
+	uint8_t v;
+	int16_t c100;
+
+	v = Temp_ReadC100Checked(TEMP_EXTERNAL, &c100);
+	Temp_Pipeline_Update(TEMP_EXTERNAL, c100, v,
+	                     settings.outTemperatureCalibration);
+	v = Temp_ReadC100Checked(TEMP_INTERNAL, &c100);
+	Temp_Pipeline_Update(TEMP_INTERNAL, c100, v,
+	                     settings.localTemperatureCalibration);
+}
+
+/**********************************************************************************************************************/
 void main(void) {
 	btn_id_t b = BTN_MENU;
 
@@ -316,6 +333,14 @@ void main(void) {
 	settings_persist_pending = !settings_restore();
 	temp_src = (temp_src_t)settings.sensosUsed;
 
+	/* Start in the LAST SAVED state: systemMode is the ZCL enum (0x00/0x04). */
+	/* Seed the link sentinels FIRST - Led_BootTest() already answers frames  */
+	/* from its delay slices, and a STATE_ALL dump must not go out with the   */
+	/* stale 0xFF sentinel (which reads back as OFF).                         */
+	power_on   = (settings.systemMode != SYS_MODE_OFF);
+	prev_power = power_on;
+	Link_UpdateStates((uint8_t)power_on, 0);
+
 	Led_BootTest();
 
 	/* Normal-mode boot is up: announce it so the peer runs a fresh Info        */
@@ -335,9 +360,13 @@ void main(void) {
 	Led_CellScan();
 #endif
 
-	power_on = 0;                    /* always power-up in OFF state */
+	/* First probe pass BEFORE the paint: the pipeline was zeroed at boot and    */
+	/* Temp_Draw() shows "Er" for an invalid sample - without this the restored  */
+	/* ON screen would flash "Er" until the first 1 s tick.                      */
+	Temp_MeasureProbes();
+
 	ext_ok = 0;
-	Thermo_Apply();                  /* standby: green leaf on, rest off */
+	Thermo_Apply();                  /* OFF: standby / ON: the restored live screen */
 
 	T0_1s_Init();                    /* 1 s time base for periodic reports */
 
@@ -663,6 +692,10 @@ void main(void) {
 		{
 			uint8_t sm;
 			if(Link_TakeSysMode(&sm)) {
+				/* h_sysmode already restricted this to OFF/HEAT (0x00/0x04). */
+				settings.systemMode = (sm == LNK_SYSMODE_OFF) ? SYS_MODE_OFF
+				                                              : SYS_MODE_HEAT;
+				if(!Settings_Persist()) settings_persist_pending = 1;
 				power_on = (uint8_t)(sm != LNK_SYSMODE_OFF);
 				DEBUG(BUTTONS_EN, { debug_kv("sysmode ", (uint16_t)sm); });
 			}
@@ -827,11 +860,16 @@ void main(void) {
 		if(pwr_arm) {
 			if(Btn_ActionAllowed(BTN_POWER) && (power_on == pwr_arm_power) &&
 			   BTN_IsDown(BTN_POWER)) {
-				if((uint16_t)(BTN_Tick10ms() - pwr_arm_tick) >= PWR_ARM_TICKS) {
-					pwr_arm = 0;
-					power_on = !power_on;
-					DEBUG(BUTTONS_EN, { debug_puts(power_on ? "ON\r\n" : "OFF\r\n"); });
-				}
+			if((uint16_t)(BTN_Tick10ms() - pwr_arm_tick) >= PWR_ARM_TICKS) {
+				pwr_arm = 0;
+				/* Persist the ZCL system mode (OFF/HEAT) with every toggle so a  */
+				/* reboot restores it. A flash refusal arms the bounded retry -   */
+				/* the toggle itself must not depend on data-flash.               */
+				settings.systemMode = power_on ? SYS_MODE_OFF : SYS_MODE_HEAT;
+				if(!Settings_Persist()) settings_persist_pending = 1;
+				power_on = !power_on;
+				DEBUG(BUTTONS_EN, { debug_puts(power_on ? "ON\r\n" : "OFF\r\n"); });
+			}
 			}
 			else {
 				pwr_arm = 0;       /* released: abandon */
@@ -844,10 +882,6 @@ void main(void) {
 		/* - larger lines print garbage from the tail end of the argument      */
 		/*   block (observed: 21-arg line corrupted k4..k7).                   */
 		if(sec_flag) {
-			int16_t ext_c100;
-			int16_t in_c100;
-			uint8_t ext_v;
-			uint8_t in_v;
 			const temp_sample_t xdata *in_sample;
 			const temp_sample_t xdata *ext_sample;
 			const temp_sample_t xdata *display_sample;
@@ -858,17 +892,11 @@ void main(void) {
 			   menu_set == MENU_OFF && sched_set == SCHED_SET_OFF) {
 				(void)Settings_Persist();
 			}
-			temp_src = (temp_src_t)settings.sensosUsed;  /* follow remote change */
-			/* read both probes each second: external drives SYM_HEATER and is   */
-			/* the primary for OU/AL; internal is the fallback and the source    */
-			/* for IN. Calibration (stored x10) is applied per sensor.           */
-			ext_v = Temp_ReadC100Checked(TEMP_EXTERNAL, &ext_c100);
-			Temp_Pipeline_Update(TEMP_EXTERNAL, ext_c100, ext_v,
-			                     settings.outTemperatureCalibration);
-
-			in_v = Temp_ReadC100Checked(TEMP_INTERNAL, &in_c100);
-			Temp_Pipeline_Update(TEMP_INTERNAL, in_c100, in_v,
-			                     settings.localTemperatureCalibration);
+			temp_src = (temp_src_t)settings.sensosUsed;  /* follow remote change  */
+			/* read both probes each second (external drives SYM_HEATER and is    */
+			/* the primary for OU/AL, internal is the fallback and the source for */
+			/* IN): shared helper, per-sensor calibration applied inside.         */
+			Temp_MeasureProbes();
 
 			in_sample = Temp_Pipeline_Get(TEMP_INTERNAL);
 			ext_sample = Temp_Pipeline_Get(TEMP_EXTERNAL);

@@ -528,6 +528,14 @@ static void h_sysmode(link_ctx_t xdata *cx) {
 	const uart_frame_t xdata *f = cx->f;
 	link_res_t xdata *r = &link_result;
 
+	/* Closed set: this thermostat represents exactly OFF and HEAT, and the  */
+	/* value is persisted (settings.systemMode). Anything else (AUTO/COOL/   */
+	/* DRY ...) is rejected so the peer resyncs from STATE_ALL instead of    */
+	/* parking a mode that would never be applied.                           */
+	if(f->payload[0] != LNK_SYSMODE_OFF && f->payload[0] != LNK_SYSMODE_HEAT) {
+		r->status = LNK_ST_VALUE;
+		return;
+	}
 	link_sysmode_val     = f->payload[0];
 	link_sysmode_pending = 1;
 }
