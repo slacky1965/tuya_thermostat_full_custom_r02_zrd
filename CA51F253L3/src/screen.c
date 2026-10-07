@@ -197,10 +197,12 @@ uint8_t xdata net_hold;                      /* OFF: seconds left of the steady 
 /* Apply the whole LED state (display + all backlights) for power_on/off.       */
 /* The manual/schedule icon pair: ONE mapping for the remote window, the        */
 /* local MENU click and this repaint (was three hand-written copies that had    */
-/* already drifted in formatting).                                              */
+/* already drifted in formatting). progMode is a bitmap - hand/clock follow the */
+/* schedule BIT, the economy symbol follows ZCL bit 2 (Eco).                    */
 void ProgMode_Icons(uint8_t pm) {
-	Led_SymSet(SYM_HAND,  (pm == PROG_MODE_MANUAL)  ? 1 : 0);
-	Led_SymSet(SYM_CLOCK, (pm == PROG_MODE_SCHEDULE) ? 1 : 0);
+	Led_SymSet(SYM_HAND,  (pm & PROG_MODE_SCHEDULE) ? 0 : 1);
+	Led_SymSet(SYM_CLOCK, (pm & PROG_MODE_SCHEDULE) ? 1 : 0);
+	Led_SymSet(SYM_ECO,   (pm & PROG_MODE_ECO)      ? 1 : 0);
 }
 
 /* 1 when NO settings mode owns the screen. Single source for the six           */

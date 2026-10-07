@@ -102,7 +102,9 @@ uint8_t settings_ranges_valid(const settings_t xdata *value) {
 	if(!SETTINGS_IN_RANGE(value->localTemperatureCalibration, ABS_MIN_TEMP_CALIB, ABS_MAX_TEMP_CALIB)) return 0;
 	if(!SETTINGS_IN_RANGE(value->outTemperatureCalibration, ABS_MIN_TEMP_CALIB, ABS_MAX_TEMP_CALIB)) return 0;
 	if(!SETTINGS_IN_RANGE(value->deadBand, ABS_MIN_DEADBAND, ABS_MAX_DEADBAND)) return 0;
-	if(value->progMode > PROG_MODE_SCHEDULE) return 0;
+	/* progMode is a BITMAP: only ZCL bit0 (schedule) and bit2 (eco) exist here, */
+	/* so 0/1/4/5 pass and everything else (bit1 auto/recovery) is rejected.     */
+	if(value->progMode & (uint8_t)~PROG_MODE_MASK) return 0;
 	if(value->systemMode > SYS_MODE_SLEEP || value->systemMode == 2) return 0;
 	/* The two limits are cross-bounded: the MIN limit may only rise to          */
 	/* MIN_HEATSETPOINT_LIMIT_MAX, the MAX limit may only fall to                */

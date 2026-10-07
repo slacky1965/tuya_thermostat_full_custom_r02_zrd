@@ -29,23 +29,32 @@ typedef enum
 	BTN_EVT_HOLD        = 0x02,  /* long press reached (key still held)       */
 	BTN_EVT_HOLD_REPEAT = 0x03,  /* auto-repeat while holding                 */
 	BTN_EVT_RELEASE     = 0x04,  /* release after a long hold                 */
-	BTN_EVT_CHORD       = 0x05   /* UP+DOWN held together (keypad lock)       */
+	BTN_EVT_CHORD       = 0x05,  /* UP+DOWN held together (keypad lock)       */
+	BTN_EVT_CHORD2      = 0x06   /* MENU+CLOCK held together (Eco toggle)     */
 } btn_evt_t;
 
 #define BTN_COUNT   5
 
-/* Two-button chord: BTN_UP + BTN_DOWN held together, either press order.       */
-/* While both are down the two keys emit NO individual events; once both have   */
-/* stayed down for BTN_CHORD_10MS_TICKS (total, from the FIRST press) a single  */
-/* BTN_EVT_CHORD is queued with the pseudo-id BTN_CHORD (5). Driver-level       */
-/* gesture: works in any state.                                                 */
-/* Staggered presses: a lone chord key does not start its individual HOLD       */
-/* until BTN_CHORD_GRACE_10MS_TICKS has passed (partner window), so pressing    */
-/* e.g. UP 100 ms before DOWN never leaks a lone "up" HOLD/REPEAT.              */
+/* Two independent two-button chords, either press order:                        */
+/*   chord 1: BTN_UP + BTN_DOWN      -> keypad lock  (BTN_EVT_CHORD,  id 5)      */
+/*   chord 2: BTN_MENU + BTN_CLOCK   -> Eco toggle    (BTN_EVT_CHORD2, id 6)     */
+/* The MENU+CLOCK pair was freed when the lock chord moved to the arrows         */
+/* (2026-10-03). While both keys of a chord are down they emit NO individual     */
+/* events; once both have stayed down for the pair's 10MS_TICKS (total, from     */
+/* the FIRST press) a single event is queued with the pair's pseudo id.          */
+/* Driver-level gestures: the state machine runs per pair, the app decides       */
+/* what each event means (see main.c).                                           */
+/* Staggered presses: a lone chord key does not start its individual HOLD        */
+/* until BTN_CHORD_GRACE_10MS_TICKS has passed (partner window), so pressing     */
+/* e.g. UP 100 ms before DOWN never leaks a lone "up" HOLD/REPEAT.               */
 #define BTN_CHORD   5      /* pseudo key id used in chord events               */
 #define BTN_CHORD_A  BTN_UP
 #define BTN_CHORD_B  BTN_DOWN
-#define BTN_CHORD_10MS_TICKS   200       /* 2.0 s with both held -> BTN_EVT_CHORD  */
+#define BTN_CHORD_10MS_TICKS   200       /* 2.0 s with both held -> BTN_EVT_CHORD            */
+#define BTN_CHORD2  6                    /* pseudo key id used in the second chord events    */
+#define BTN_CHORD2_A  BTN_MENU
+#define BTN_CHORD2_B  BTN_CLOCK
+#define BTN_CHORD2_10MS_TICKS  200       /* 2.0 s -> BTN_EVT_CHORD2                */
 #define BTN_CHORD_GRACE_10MS_TICKS  25   /* 250 ms partner window                  */
 
 /* timing in real 10 ms ticks, advanced from the Timer0 10 ms ISR in main.c.  */

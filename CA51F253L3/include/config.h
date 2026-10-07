@@ -141,6 +141,13 @@
 /* never fires during normal operation - it only reacts to a genuine runaway.     */
 #define RELAY_TRIP_MARGIN_C100 100
 
+/* Economy mode (ZCL ProgrammingOperationMode bit 2): fixed control-only         */
+/* setpoint offset in c100, subtracted from the active setpoint BEFORE the       */
+/* [min..max] clamp, so Eco still respects the user limits. The stored setpoint  */
+/* and the schedule slots never change (data != policy). Placeholder for a       */
+/* future setpoint-dependent formula (bigger setpoint -> bigger offset).         */
+#define ECO_SETPOINT_OFFSET_C100 300
+
 /* Wireless climate sensor (WS) freshness window: while the last WS temperature   */
 /* report is younger than this, the WS sensor drives BOTH the relay and the big   */
 /* digits; after that the thermostat falls back to the configured probes          */

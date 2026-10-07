@@ -81,9 +81,9 @@ void Net_Flash(void);                   /* drive one 10 ms NET half-phase       
 /* ---- helpers shared between main(), the modes and the scheduler ---- */
 void Thermo_Apply(void);
 uint8_t Settings_Persist(void);
-void Sched_Set_Draw(void);          /* src/sched_mode.c                            */
-void ProgMode_Icons(uint8_t pm);    /* SYM_HAND/SYM_CLOCK from progMode (screen.c) */
-uint8_t Screen_ModeFree(void);      /* 1 = no clock/schedule/menu owns the screen  */
+void Sched_Set_Draw(void);          /* src/sched_mode.c                                    */
+void ProgMode_Icons(uint8_t pm);    /* SYM_HAND/SYM_CLOCK/SYM_ECO from progMode (screen.c) */
+uint8_t Screen_ModeFree(void);      /* 1 = no clock/schedule/menu owns the screen          */
 
 /* ---- state shared between main() and the modes ---- */
 extern bit clock_colon;                          /* ':' blink state             */

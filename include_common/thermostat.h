@@ -5,9 +5,12 @@
 /* (uint16_t/int16_t) must be in scope already (both sides include their own    */
 /* stdint/types before it).                                                     */
 
-/* Programming operation mode (ZCL thermostat bit0, manual = 0): */
-#define PROG_MODE_MANUAL                    0       /* simple/setpoint mode (manual up/down)    */
-#define PROG_MODE_SCHEDULE                  1       /* weekly schedule programming enabled      */
+/* Programming operation mode (ZCL thermostat bitmap; bit0 = manual/schedule,   */
+/* bit2 = Economy/EnergyStar):                                                  */
+#define PROG_MODE_MANUAL                    0                        /* simple/setpoint mode (manual up/down)    */
+#define PROG_MODE_SCHEDULE                  1                        /* weekly schedule programming enabled      */
+#define PROG_MODE_ECO                       4                        /* Economy/EnergyStar (ZCL bit 2)           */
+#define PROG_MODE_MASK          (PROG_MODE_SCHEDULE | PROG_MODE_ECO) /* bits we support                          */
 
 #define TEMPERATURE_STEP                    50                                  /* 0.5° x 100   */
 #define ABS_MIN_HEATSETPOINT_LIMIT          500                                 /* 5°C x 100    */

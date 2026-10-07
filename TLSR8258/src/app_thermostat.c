@@ -262,10 +262,12 @@ bool App_Thermostat_WriteAttr(uint8_t endPoint, uint16_t clusterId, uint16_t att
                 break;
             }
             case ZCL_ATTRID_HVAC_THERMOSTAT_PROGRAMMING_OPERATION_MODE: {
-                /* Bitmap8 forwarded byte-for-byte: the CA51F2 accepts the modes   */
-                /* it supports (0/1) and rejects anything else, so the hub learns  */
-                /* about an unsupported value via the STATE_ALL resync.            */
+                /* Bitmap8 forwarded byte-for-byte: the CA51F2 accepts the modes    */
+                /* it supports (0/1/4/5 = manual/schedule bits + Economy bit 2)     */
+                /* and rejects anything else, so the hub learns about an            */
+                /* unsupported value via the STATE_ALL resync.                      */
                 uint8_t v = data[0];
+                APP_DEBUG(DEBUG_ZCL_CB_EN, "OperMode: 0x%02x\r\n", v);
                 g_zcl_thermostatAttrs.manual_progMode = v;
                 app_link_resync_if_needed(App_Link_SendSettingU8(LNK_CMD_PROG_MODE, LNK_T_BITMAP8, v));
                 break;

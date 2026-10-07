@@ -599,10 +599,39 @@ void main(void) {
 				pwr_arm_tick = BTN_Tick10ms(); /* during the hold must not be       */
 				continue;                      /* toggled back by this arm          */
 			}
+			/* Eco chord: MENU+CLOCK held >= 2 s while ON -> toggle Economy         */
+			/* (ZCL ProgrammingOperationMode bit 2, PROG_MODE_ECO). Placed AFTER    */
+			/* the mode dispatch: an open mode owns the keys and swallows this      */
+			/* event, so the handler only ever runs on a free screen and may draw   */
+			/* the icons directly (M6 rule). The keypad-lock filter sits before it, */
+			/* so a locked panel ignores the gesture like every key except the      */
+			/* unlock chord.                                                        */
+			if(b == BTN_CHORD2 && ev == BTN_EVT_CHORD2) {
+				if(power_on) {
+					uint8_t prev_pm = settings.progMode;
+
+					settings.progMode ^= PROG_MODE_ECO;
+					if(!Settings_Persist()) {
+						/* Flash refused: roll back so RAM == flash == peer.       */
+						settings.progMode = prev_pm;
+						continue;
+					}
+					if(Link_PeerAlive() && !Ota_IsPending()) {
+						Link_SendU8(LNK_CMD_PROG_MODE, LNK_T_BITMAP8, settings.progMode);
+					}
+					ProgMode_Icons(settings.progMode);
+					Led_Flush();
+					target_setpoint = Sched_ActiveSetpoint();  /* apply immediately */
+					DEBUG(BUTTONS_EN, {
+						debug_puts(settings.progMode & PROG_MODE_ECO ?
+						           "eco on\r\n" : "eco off\r\n"); });
+				}
+				continue;
+			}
 			/* a) TK3 (menu) single press (power-on) -> manual <-> schedule mode. */
 			/*    ZCL bit0, no schedule data cleared.                             */
 			if(b == BTN_MENU && ev == BTN_EVT_CLICK && power_on) {
-				settings.progMode = settings.progMode ? PROG_MODE_MANUAL : PROG_MODE_SCHEDULE;
+				settings.progMode ^= PROG_MODE_SCHEDULE;   /* bit0 toggle keeps eco    */
 				/* the peer must follow a local manual/schedule toggle too, otherwise  */
 				/* its ZCL ProgrammingOperationMode keeps the old value until the next */
 				/* STATE_ALL resync (same pattern as the arrow setpoint send).         */
@@ -613,7 +642,8 @@ void main(void) {
 				Led_Flush();
 				target_setpoint = Sched_ActiveSetpoint();  /* apply immediately */
                 DEBUG(BUTTONS_EN, {
-					debug_puts(settings.progMode ? "mode sched\r\n" : "mode manual\r\n"); });
+					debug_puts(settings.progMode & PROG_MODE_SCHEDULE ?
+					           "mode sched\r\n" : "mode manual\r\n"); });
 				continue;
 			}
 			/* c) TK4 (clock) single press (power-on) -> 24h <-> AM/PM.            */
@@ -635,7 +665,7 @@ void main(void) {
 			/*    OFF: arrows do NOT change the setpoint. Only DOWN long-press        */
 			/*         is recognized (logged); UP is fully inert.                     */
 			if((b == BTN_UP || b == BTN_DOWN) && power_on &&
-			   (settings.progMode == PROG_MODE_MANUAL) &&
+			   !(settings.progMode & PROG_MODE_SCHEDULE) &&
 			   (ev == BTN_EVT_CLICK || ev == BTN_EVT_HOLD || ev == BTN_EVT_HOLD_REPEAT)) {
 					int16_t d = (b == BTN_UP) ? 50 : -50;   /* 0.5 degC = 50 x 0.01 */
 					int16_t v = settings.occupiedHeatingSetpoint + d;
@@ -808,7 +838,8 @@ void main(void) {
 		/* CLOCK held >= 3 s while ON -> enter clock-set mode. */
 		if(clk_arm) {
 			if(power_on && Btn_ActionAllowed(BTN_CLOCK) &&
-			   clk_set == CLK_SET_OFF && BTN_IsDown(BTN_CLOCK)) {
+			   clk_set == CLK_SET_OFF && BTN_IsDown(BTN_CLOCK) &&
+			   !(BTN_IsDown(BTN_CHORD2_A) && BTN_IsDown(BTN_CHORD2_B))) {
 				if((uint16_t)(BTN_Tick10ms() - clk_arm_tick) >= CLK_ARM_TICKS) {
 					clk_arm = 0;
 					Clock_Set_Enter();
@@ -823,7 +854,8 @@ void main(void) {
 		/* MENU held >= 3 s while ON -> enter the settings menu. */
 		if(menu_arm) {
 			if(power_on && Btn_ActionAllowed(BTN_MENU) && Screen_ModeFree() &&
-			   BTN_IsDown(BTN_MENU)) {
+			   BTN_IsDown(BTN_MENU) &&
+			   !(BTN_IsDown(BTN_CHORD2_A) && BTN_IsDown(BTN_CHORD2_B))) {
 				if((uint16_t)(BTN_Tick10ms() - menu_arm_tick) >= MENU_ARM_TICKS) {
 					menu_arm = 0;
 					Menu_Enter();

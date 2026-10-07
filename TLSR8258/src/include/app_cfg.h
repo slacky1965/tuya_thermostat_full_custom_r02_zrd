@@ -76,7 +76,7 @@ extern "C" {
 #define DEBUG_TEMPIN_EN                 OFF
 #define DEBUG_TEMPOUT_EN                OFF
 #define DEBUG_WS_EN                     ON      /* wireless climate sensor reports */
-#define DEBUG_ZCL_CB_EN                 OFF
+#define DEBUG_ZCL_CB_EN                 ON
 #define DEBUG_ZB_CB_EN                  ON
 
 /* HCI interface */

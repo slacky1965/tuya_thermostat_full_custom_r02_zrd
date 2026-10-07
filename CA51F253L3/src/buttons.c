@@ -60,16 +60,22 @@ static uint16_t  xdata hold_tick10[BTN_COUNT];  /* tick10ms when HOLD fired    *
 /* HOLD/REPEAT fire at real 0.5 s / 60 ms: 50 ticks = 0.5 s, 6 = 60 ms.      */
 static uint8_t xdata was_hold[BTN_COUNT];     /* HOLD already reported       */
 
-/* Two-button chord (UP+DOWN -> keypad lock). State survives across scans:     */
-/* from the moment BOTH keys are down the gesture owns them (no individual     */
-/* events) until BOTH are up again. BTN_EVT_CHORD fires once after the hold.   */
+/* Two-button chords (pair 1: UP+DOWN -> keypad lock,                            */
+/* pair 2: MENU+CLOCK -> Eco toggle). State survives across scans:               */
+/* from the moment BOTH keys of a pair are down the gesture owns them (no        */
+/* individual events) until BOTH are up again. Each event fires once after the   */
+/* hold; the two machines below are identical, kept as parallel scalars so the   */
+/* original lock-chord text stays byte-for-byte intact.                          */
 static uint8_t xdata pdown[BTN_COUNT];        /* debounced down state snapshot */
-static uint8_t xdata chord_on;                /* both chord keys are/were down */
+static uint8_t xdata chord_on;                /* pair 1 keys are/were down     */
 static uint8_t xdata chord_fired;             /* BTN_EVT_CHORD already queued  */
 /* chord_tick doubles as the pair start reference: it is stamped at the press  */
 /* edge of the FIRST chord key (whichever it is, both press orders) while the  */
 /* partner is still up, and the chord block only reads it when !chord_on.      */
 static uint16_t xdata chord_tick;             /* tick10ms when chord began     */
+static uint8_t xdata chord2_on;               /* pair 2 keys are/were down     */
+static uint8_t xdata chord2_fired;            /* BTN_EVT_CHORD2 already queued */
+static uint16_t xdata chord2_tick;            /* tick10ms when pair 2 began    */
 
 static uint16_t  xdata ebase[BTN_COUNT];        /* ref-rescaled base this scan */
 
@@ -207,6 +213,7 @@ void BTN_Init(void) {
 void BTN_Scan(void) {
 	uint8_t i;
 	uint8_t pair_start;
+	uint8_t pair_start2;
 
 	if(!tk_busy) {
 		Touch_Scan_Start();               /* idle: kick off the next cycle */
@@ -257,6 +264,7 @@ void BTN_Scan(void) {
 			cnt[i] = on[i] = pdown[i] = was_hold[i] = 0;
 		}
 		chord_on = chord_fired = 0;   /* the chord gesture is abandoned     */
+		chord2_on = chord2_fired = 0; /* and so is the Eco chord            */
 		return;
 	}
 
@@ -276,6 +284,7 @@ void BTN_Scan(void) {
 	/* press (HOLD/REPEAT/chord) instead of from the previous scan.            */
 	/* both chord keys were up before this scan -> a press below starts a pair */
 	pair_start = !on[BTN_CHORD_A] && !on[BTN_CHORD_B];
+	pair_start2 = !on[BTN_CHORD2_A] && !on[BTN_CHORD2_B];
 
 	for(i = 0; i < BTN_COUNT; i++) {
 		pdown[i] = (cnt[i] >= TK_CONF) ? 1 : 0;
@@ -286,6 +295,9 @@ void BTN_Scan(void) {
 			   partner going down later must not move the start                */
 			if(pair_start && (i == BTN_CHORD_A || i == BTN_CHORD_B)) {
 				chord_tick = down_tick10[i];
+			}
+			if(pair_start2 && (i == BTN_CHORD2_A || i == BTN_CHORD2_B)) {
+				chord2_tick = down_tick10[i];
 			}
 		}
 	}
@@ -328,12 +340,45 @@ void BTN_Scan(void) {
 		}
 	}
 
+	/* second chord state machine: MENU+CLOCK both down -> hold timer ->         */
+	/* EVENT_CHORD2. Same rules as the lock chord above (2 s from the first      */
+	/* press, late partner re-anchors past the grace window, release edges       */
+	/* swallowed so the gesture never leaks a lone MENU/CLOCK CLICK).            */
+	{
+		uint8_t ca2 = pdown[BTN_CHORD2_A];
+		uint8_t cb2 = pdown[BTN_CHORD2_B];
+
+		if(ca2 && cb2) {
+			if(!chord2_on) {
+				chord2_on = 1;
+				chord2_fired = 0;
+				if((uint16_t)(BTN_Tick10ms() - chord2_tick) > BTN_CHORD_GRACE_10MS_TICKS) {
+					chord2_tick = BTN_Tick10ms();
+				}
+			}
+			else if(!chord2_fired &&
+			        (uint16_t)(BTN_Tick10ms() - chord2_tick) >= BTN_CHORD2_10MS_TICKS) {
+				chord2_fired = 1;
+				evq_push((btn_id_t)BTN_CHORD2, BTN_EVT_CHORD2);
+			}
+		}
+		else if(chord2_on && !ca2 && !cb2) {
+			chord2_on = 0;
+			chord2_fired = 0;
+			on[BTN_CHORD2_A] = 0;
+			on[BTN_CHORD2_B] = 0;
+			was_hold[BTN_CHORD2_A] = 0;
+			was_hold[BTN_CHORD2_B] = 0;
+		}
+	}
+
 	for(i = 0; i < BTN_COUNT; i++) {
 		uint8_t pressed = pdown[i];
 
-		/* while the chord is in progress its keys emit no individual events,   */
+		/* while a chord is in progress its keys emit no individual events,     */
 		/* but IsDown/AnyDown must still see the true hardware state.           */
-		if(chord_on && (i == BTN_CHORD_A || i == BTN_CHORD_B)) {
+		if((chord_on && (i == BTN_CHORD_A || i == BTN_CHORD_B)) ||
+		   (chord2_on && (i == BTN_CHORD2_A || i == BTN_CHORD2_B))) {
 			on[i] = pressed;
 			continue;
 		}
@@ -348,8 +393,9 @@ void BTN_Scan(void) {
 			else {
 				/* a lone chord key does not count as an individual hold until  */
 				/* the partner window elapsed: a slightly-staggered UP+DOWN     */
-				/* press never leaks a lone "up"/"down" HOLD or repeat.         */
-				if((i == BTN_CHORD_A || i == BTN_CHORD_B) &&
+				/* (or MENU+CLOCK) press never leaks a lone HOLD or repeat.     */
+				if(((i == BTN_CHORD_A || i == BTN_CHORD_B) ||
+				    (i == BTN_CHORD2_A || i == BTN_CHORD2_B)) &&
 				   (uint16_t)(BTN_Tick10ms() - down_tick10[i]) < BTN_CHORD_GRACE_10MS_TICKS) {
 					continue;
 				}

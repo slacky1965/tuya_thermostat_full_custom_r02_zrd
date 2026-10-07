@@ -223,11 +223,13 @@ uint8_t Sched_EntryValid(const schedule_t xdata *e) {
 }
 
 /* Setpoint that applies NOW:
-   - PROG_MODE_SCHEDULE: the transition with the GREATEST transTime <= current
-     minutes, regardless of storage order (unused entries are skipped, see
-     Sched_EntryValid). Before the day's first transition there is no match, so
-     fall back to occupiedHeatingSetpoint.
-   - PROG_MODE_MANUAL: occupiedHeatingSetpoint.
+   - schedule bit (PROG_MODE_SCHEDULE): the transition with the GREATEST
+     transTime <= current minutes, regardless of storage order (unused entries
+     are skipped, see Sched_EntryValid). Before the day's first transition there
+     is no match, so fall back to occupiedHeatingSetpoint.
+   - manual (schedule bit clear): occupiedHeatingSetpoint.
+   - eco bit (PROG_MODE_ECO): a fixed control-only offset is subtracted before
+     the clamp below, so Eco never rewrites the stored values.
    Every path then passes the same use-time clamp into [min..max]: the stored
    values keep their ABS-valid image (data != policy), only CONTROL is bounded.
    This also restores the safety-cut invariant: with SP_used <= max the normal
@@ -244,7 +246,7 @@ int16_t Sched_ActiveSetpoint(void) {
 	int16_t  t = settings.occupiedHeatingSetpoint;
 	uint8_t  i;
 
-	if(settings.progMode == PROG_MODE_SCHEDULE) {
+	if(settings.progMode & PROG_MODE_SCHEDULE) {
 		RTC_ReadTime(&h, &m, 0, &w);
 		now = (uint16_t)h * 60 + m;
 		day = Sched_Day(w);
@@ -257,6 +259,13 @@ int16_t Sched_ActiveSetpoint(void) {
 				found = 1;
 			}
 		}
+	}
+	/* Economy (ZCL POM bit 2): fixed offset on CONTROL only. Applied BEFORE the  */
+	/* use-time clamp so the result stays inside [min..max] (Eco never heats      */
+	/* below the min limit) and after both mode paths, so it works in manual AND  */
+	/* in schedule mode. The stored setpoint/slot keeps its original value.       */
+	if(settings.progMode & PROG_MODE_ECO) {
+		t -= ECO_SETPOINT_OFFSET_C100;
 	}
 	/* Use-time policy (CA-2): the active setpoint is clamped into [min..max]   */
 	/* for CONTROL only - the stored manual value / schedule slot keeps the     */
