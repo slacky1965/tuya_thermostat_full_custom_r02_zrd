@@ -133,7 +133,7 @@ static uint8_t temp_read_raw_checked(uint8_t sensor, uint16_t xdata *raw) {
 }
 /*******************************************************************************/
 uint8_t Temp_ReadC100Checked(uint8_t sensor, int16_t xdata *value_c100) {
-	uint16_t adc;
+	XDATA_TMP(uint16_t, adc);
 	uint16_t i;
 
 	*value_c100 = TEMP_ERR;

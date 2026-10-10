@@ -236,9 +236,9 @@ uint8_t Sched_EntryValid(const schedule_t xdata *e) {
    OFF point (SP_used + deadBand) always stays below the trip
    (max + ABS_MAX_DEADBAND + 1 degC) by at least the trip margin.          */
 int16_t Sched_ActiveSetpoint(void) {
-	uint8_t  h;
-	uint8_t  m;
-	uint8_t  w;
+	XDATA_TMP(uint8_t, h);
+	XDATA_TMP(uint8_t, m);
+	XDATA_TMP(uint8_t, w);
 	uint16_t now;
 	uint16_t best = 0;
 	uint8_t  found = 0;

@@ -44,7 +44,9 @@ void Clock_Set_Draw(void) {
 /* Enter the clock-set mode: load the current time, blank the weekday, start    */
 /* blinking the hours field. Only meaningful while ON.                          */
 void Clock_Set_Enter(void) {
-	uint8_t h, m, w;
+	XDATA_TMP(uint8_t, h);
+	XDATA_TMP(uint8_t, m);
+	XDATA_TMP(uint8_t, w);
 
 	RTC_ReadTime(&h, &m, 0, &w);
 	clk_set_h = h;
@@ -64,7 +66,7 @@ void Clock_Set_Enter(void) {
 }
 
 void Clock_Set_Commit(void) {
-	uint8_t current_week;
+	XDATA_TMP(uint8_t, current_week);
 	uint16_t day;
 	int8_t delta;
 

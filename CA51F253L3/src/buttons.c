@@ -39,9 +39,12 @@
 /* per-key press thresholds (K3..K7 = menu/clock/power/up/down)                 */
 /* NOTE: tuned under SOURCE_INNER. VDD reference changes the raw scale, so      */
 /* these need re-calibration on hardware after the reference switch.            */
-static const uint8_t tk_hyst[BTN_COUNT] = { 110, 70, 55, 40, 45 };
-static const uint8_t tk_noise[BTN_COUNT] = { 27, 17, 13, 10, 11 };  /* hyst/4   */
-static const uint8_t tkch[BTN_COUNT]    = { 3, 4, 5, 6, 7 };        /* TK3..TK7 */
+/* `code` is mandatory: clang puts an unqualified const global in XDATA, and    */
+/* main() clears XRAM before any of this is read - the tables would be zero     */
+/* (tkch=0 maps every key onto channel 0 and the panel goes dead).              */
+static const uint8_t code tk_hyst[BTN_COUNT] = { 110, 70, 55, 40, 45 };
+static const uint8_t code tk_noise[BTN_COUNT] = { 27, 17, 13, 10, 11 };  /* hyst/4   */
+static const uint8_t code tkch[BTN_COUNT]    = { 3, 4, 5, 6, 7 };        /* TK3..TK7 */
 
 static uint16_t  xdata tkv[BTN_COUNT];
 static uint16_t  xdata base[BTN_COUNT];
@@ -214,6 +217,11 @@ void BTN_Scan(void) {
 	uint8_t i;
 	uint8_t pair_start;
 	uint8_t pair_start2;
+	/* MDU temporaries: Mdu_DivMod32 writes through xdata pointers, so they */
+	/* must reference static xdata storage (clang puts automatics on the    */
+	/* hardware stack and rejects address-space-qualified automatics).      */
+	static uint32_t xdata eb;
+	static uint32_t xdata er;
 
 	if(!tk_busy) {
 		Touch_Scan_Start();               /* idle: kick off the next cycle */
@@ -224,8 +232,6 @@ void BTN_Scan(void) {
 	uint8_t jumps = 0;
 
 	for(i = 0; i < BTN_COUNT; i++) {
-		uint32_t eb;
-		uint32_t er;
 		int d;
 
 		/* ref-rescaled base: mirrors TS_Lib (base * ref_now / ref_base) so a    */

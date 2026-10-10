@@ -50,4 +50,18 @@ typedef unsigned long   uint_fast32_t;
 #define bit     __bit
 #endif
 /*****************************************************************************/
+/* Output temporaries for the xdata-pointer driver APIs (RTC_ReadTime,       */
+/* Mdu_DivMod32, ...). SDCC --model-large already places automatics in       */
+/* XDATA, so a plain local is correct there; clang puts automatics on the    */
+/* hardware stack and rejects passing their address to an xdata pointer -    */
+/* under clang the temporary becomes a static xdata object instead.          */
+/*****************************************************************************/
+#ifndef XDATA_TMP
+#if defined(__clang__)
+#define XDATA_TMP(type, name) static type __xdata name
+#else
+#define XDATA_TMP(type, name) type name
+#endif
+#endif
+/*****************************************************************************/
 #endif

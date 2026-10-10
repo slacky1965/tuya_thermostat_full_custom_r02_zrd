@@ -11,18 +11,18 @@
 #define ON              1
 #define OFF             0
 
-#define UART_DEBUG      OFF               /* effective ROM cap for A/B settings    */
+#define UART_DEBUG      ON                /* effective ROM cap for A/B settings    */
 
 #define BUTTONS_EN      ON
 #define LED_EN          OFF
 #define RAW_EN          OFF
 #define TEMP_EN         OFF
 #define RTC_EN          OFF
-#define LINK_EN         OFF                /* ZT3L link: raw RX/TX packet dump    */
+#define LINK_EN         ON                 /* ZT3L link: raw RX/TX packet dump    */
 #define LED_SCAN_EN     OFF                /* bench: run Led_CellScan at startup  */
-#define FLASH_EN        OFF
-#define FLASHER_EN      OFF               /* flasher log during OTA (UART0, P3.0/P3.1) */
-#define SETTINGS_EN     OFF
+#define FLASH_EN        ON
+#define FLASHER_EN      ON                /* flasher log during OTA (UART0, P3.0/P3.1) */
+#define SETTINGS_EN     ON
 #define TIMER_EN        OFF
 /* Bench-only touch helpers (BTN_AnyDown/BTN_Baseline) - they have no call
  * site at all, so they get their own switch instead of riding on BUTTONS_EN. */
@@ -50,6 +50,20 @@ void debug_temp(int16_t in_live, int16_t in_acc, int16_t ext_live, int16_t ext_a
     void debug_dec2(uint8_t v);
     void debug_kv(const char code *tag, int16_t v);   /* tag + dec + CRLF     */
     void debug_hex(uint16_t v, uint8_t digits);
+
+#if defined(__clang__)
+    /* clang (mcs51-llvm) types a string literal as plain (AS0) char*: passing
+       one to the code-space parameter is an address-space error, and the AS0
+       spelling would force an XDATA copy of EVERY debug string (.mcs51.
+       xdata.init) - unaffordable in 2048 B of XRAM. These macros rewrite the
+       ARGUMENT to a code pointer at the call site instead: clang then keeps
+       the literal in .mcs51.code.rodata (flash), exactly like SDCC. A
+       function-like macro is not recursively expanded, so the inner name is
+       the real function. debug.c #undefs each macro around its own function
+       DEFINITION (the definition would look like a call of the macro).      */
+    #define debug_puts(s) debug_puts((const char code *)(s))
+    #define debug_kv(tag, v) debug_kv((const char code *)(tag), (v))
+#endif
 
     /* DEBUG(flag, ...) dispatches on the flag token: expands to <flag>_DEBUG(...),
        whose body prints only when UART_DEBUG and <flag> are both ON and is empty

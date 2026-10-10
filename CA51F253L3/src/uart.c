@@ -14,13 +14,17 @@
 #include "include/debug.h"
 #include "include/mdu.h"
 #include <intrins.h>
+#include <absacc.h>
+/* the vendor uart_printf() below (PRINT_EN) is the only user of these;   */
+/* the clang (mcs51-llvm) build is freestanding and ships none of them    */
+#if defined(PRINT_EN)
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <absacc.h>
-/********************************************************************************/
-/********************************************************************************/
+#endif
+/**************************************************************************/
+/**************************************************************************/
 #ifdef UART0_EN
 void Uart0_Initial(uint32_t baudrate) {
 	uint16_t value_temp;
@@ -34,10 +38,13 @@ void Uart0_Initial(uint32_t baudrate) {
 	uart0_rev.tail=0;
 	uart0_tx_flag=0;
 
-/********************************************************************************/
+/**************************************************************************/
 //Timer2 as UART0 baudrate generator
 	{
-		uint32_t q, r;
+		/* MDU temporaries: static xdata storage for the xdata-pointer API  */
+		/* (clang puts automatics on the hardware stack).                   */
+		static uint32_t xdata q;
+		static uint32_t xdata r;
 		if(!Mdu_DivMod32((uint32_t)FOSC, (uint32_t)baudrate * 32U,
 		                  &q, &r)) {
 			value_temp = UART0_RELOAD_FALLBACK;
@@ -52,10 +59,10 @@ void Uart0_Initial(uint32_t baudrate) {
 	TH2   = 	(uint8_t)(value_temp>>8);
 	TL2   = 	(uint8_t)(value_temp);;	
 	TR2   = 	1;
-/********************************************************************************/
+/****************************************************************************/
 
 
-/********************************************************************************/
+/****************************************************************************/
 //Timer1 as UART0 baudrate generator
 
 //  TMOD = (TMOD&0xCF)|0x20;
@@ -64,7 +71,7 @@ void Uart0_Initial(uint32_t baudrate) {
 //	ET1=0;
 //	TR1=1;
 //	PCON |= 0x80;
-/********************************************************************************/
+/****************************************************************************/
 
 
 	S0CON = 0x50;	 
@@ -470,7 +477,10 @@ void Uart2_Initial(uint32_t baudrate) {
 	GPIO_Init(P61F,P61_UART2_TX_SETTING);
 
 	{
-		uint32_t q, r;
+		/* MDU temporaries: static xdata storage for the xdata-pointer API  */
+		/* (clang puts automatics on the hardware stack).                   */
+		static uint32_t xdata q;
+		static uint32_t xdata r;
 		if(!Mdu_DivMod32((uint32_t)FOSC, (uint32_t)baudrate * 32U,
 		                  &q, &r)) {
 			value_temp = UART2_RELOAD_FALLBACK;

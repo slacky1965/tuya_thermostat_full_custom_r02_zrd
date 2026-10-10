@@ -47,10 +47,12 @@ static void tx_byte(uint8_t b);
 
 static void hold_done_3s(void) {
 	uint8_t o;
-	uint16_t i;
+	/* volatile: clang deletes an empty delay loop as dead code (bench     */
+	/* 2026-10-10 - the ~3 s AL phase vanished and the reboot raced TLSR)  */
+	volatile uint8_t j;
 	for(o = 0; o < 30; o++) {
 		tx_byte(LNK_OTA_DONE);
-		for(i = 0; i < 0xFFFF; i++) { }
+		for(j = 0; j < 255; j++) { }
 	}
 }
 
@@ -238,7 +240,6 @@ void main(void) {
 		if(rb < 0) goto frame_timeout;
 		len = (uint8_t)rb;
 		if(len == 0 || len > LNK_OTA_BLOCK_MAX) {
-			log_c('L'); log_c('\r'); log_c('\n');
 			tx_status(LNK_OTA_NAK, off);
 			continue;
 		}
@@ -282,7 +283,16 @@ void main(void) {
 			log_c('D'); log_c('\r'); log_c('\n');
 			show(CH_A, CH_L);
 			hold_done_3s();
-			((void (code *)(void))0x0000)();
+#if defined(__clang__)
+			/* clang treats a call through a NULL function pointer as undefined  */
+			/* behaviour and DELETED this jump (bench 2026-10-10: after DONE     */
+			/* execution fell into the next function and hung on 'AL'; a manual  */
+			/* reset booted the new image). An unconditional assembly LJMP to    */
+			/* the flash reset vector is the honest spelling.                    */
+			__asm__ volatile ("ljmp 0x0000");
+#else
+			((void (code *)(void))0x0000)();   /* never returns                */
+#endif
 			for(;;) { }
 		}
 		continue;
