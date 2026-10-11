@@ -11,18 +11,15 @@
 
 Для сборки проекта под Windows нужно скачать несколько инструментов.
 
-- [SDCC](https://sdcc.sourceforge.net/snap.php) (обязательно)
+- [clang](https://github.com/devbis/llvm-mcs51/releases) (обязательно)
+- [SDCC](https://sdcc.sourceforge.net/snap.php) (опционально, по умолчанию сборка для CA51F253L3 сделана на clang)
 - [Telink IoT Studio](https://doc.telink-semi.cn/tools/telink_iot_studio/TelinkIoTStudio_V2025.2.zip) (обязательно)
 - [Git for Windows](https://git-scm.com/install/windows?ref=faun) (рекомендуется)
 
-После установки всех компонентов запускаем Git Bash и в переходим в папку проекта. Далее выполняем последовательно
+После установки всех компонентов запускаем Git Bash и в переходим в папку проекта. Далее выполняем
 
 ```
-make clean bootloader
+make bootloader clean all
 ```
 
-и затем
-
-```
-make clean all
-```
+Проверяем вывод компилятора. Должно собраться три основных файла - bootloader для TLSR8258, и по две firmware для TLST8258 и CA51F253L3. Попутно еще создаются образы ОТА.
