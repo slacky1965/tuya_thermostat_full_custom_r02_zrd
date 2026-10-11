@@ -374,7 +374,7 @@ void Led_SensorLetters(uint8_t src) {
 
 /* menu=0 adds the temperature unit; menu=1 leaves flush to the caller. */
 static void Led_DrawValue(int value_c100, uint8_t menu) {
-	led_value_parts_t xdata parts;
+	XDATA_TMP(led_value_parts_t, parts);
 
 	Led_FormatC100((int16_t)value_c100, &parts);
 	led_buf[0] &= (uint8_t)~0x60;       /* no hundreds '1'                    */

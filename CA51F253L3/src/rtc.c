@@ -65,7 +65,7 @@ uint16_t RTC_GetDay(void) {
 }
 /**********************************************************************************/
 uint8_t RTC_GetWeek(void) {
-	uint8_t week;
+	XDATA_TMP(uint8_t, week);
 
 	RTC_ReadTime(0, 0, 0, &week);
 	return week;
@@ -73,10 +73,10 @@ uint8_t RTC_GetWeek(void) {
 /**********************************************************************************/
 #if UART_DEBUG && RTC_EN
 void RTC_Report(void) {
-	uint8_t rtc_h;
-	uint8_t rtc_m;
-	uint8_t rtc_s;
-	uint8_t rtc_w;
+	XDATA_TMP(uint8_t, rtc_h);
+	XDATA_TMP(uint8_t, rtc_m);
+	XDATA_TMP(uint8_t, rtc_s);
+	XDATA_TMP(uint8_t, rtc_w);
 	uint16_t  rtc_d;
 
 	RTC_ReadTime(&rtc_h, &rtc_m, &rtc_s, &rtc_w);
@@ -99,10 +99,12 @@ void RTC_Report(void) {
 #define RTC_UNIX_MIN_TIME   946684800UL        /* 2000-01-01 00:00:00 UTC */
 
 void RTC_SetUnixTime(uint32_t local) {
-	uint32_t day;
-	uint32_t sec;
-	uint32_t q;
-	uint32_t rem;
+	/* MDU temporaries: Mdu_DivMod32 writes through xdata pointers, so they */
+	/* must reference static xdata storage (clang puts automatics on the    */
+	/* hardware stack and rejects address-space-qualified automatics).      */
+	static uint32_t xdata day;
+	static uint32_t xdata q;
+	static uint32_t xdata rem;
 	uint8_t h;
 	uint8_t m;
 	uint8_t s;
@@ -111,8 +113,8 @@ void RTC_SetUnixTime(uint32_t local) {
 	if(local < RTC_UNIX_MIN_TIME) {
 		return;
 	}
-	if(!Mdu_DivMod32(local, 86400UL, &day, &sec)) return;
-	if(!Mdu_DivMod32(sec, 3600UL, &q, &rem)) return;
+	if(!Mdu_DivMod32(local, 86400UL, &day, &rem)) return; /* rem = sec of day  */
+	if(!Mdu_DivMod32(rem, 3600UL, &q, &rem)) return;      /* q = hour          */
 	h   = (uint8_t)q;
 	m   = 0;
 	while(rem >= 60UL) {
@@ -127,13 +129,13 @@ void RTC_SetUnixTime(uint32_t local) {
 
 	RTC_WriteTimeDay(h, m, s, w, (uint16_t)(day & 0xFFFFUL));
 }
-/********************************************************************************/
+/*******************************************************************************/
 #if UART_DEBUG && RTC_EN
 uint8_t RTC_ClockSrc(void) {
 	return rtc_src;
 }
 #endif
-/********************************************************************************/
+/*******************************************************************************/
 void RTC_Init(void) {
 	uint8_t i;
 	uint8_t xoscl_ok = 0;

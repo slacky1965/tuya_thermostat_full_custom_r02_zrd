@@ -68,9 +68,17 @@ void debug_putc(uint8_t c) {
 #ifdef DEBUG_PRIMITIVES
 /* code-qualified pointer: string literals live in code space, so this stays a
    16-bit MOVC read and does not pull the generic __gptrget helper into ROM. */
+#if defined(__clang__)
+/* the clang-only cast macro in debug.h would rewrite this definition (it
+   looks like a call of the macro); drop it here and restore after the body   */
+#undef debug_puts
+#endif
 void debug_puts(const char code *s) {
 	while(*s) debug_putc((uint8_t)*s++);
 }
+#if defined(__clang__)
+#define debug_puts(s) debug_puts((const char code *)(s))
+#endif
 
 /* Five decimal places (max 99999) cover every value in the firmware:
    temperatures come from an NTC table capped at 6000 c100 (+/- calib),
@@ -128,11 +136,17 @@ void debug_i16(int16_t v) {
 /* "<tag><decimal>\r\n" in one call: the common dump line ("sp 2100\r\n").
    Three calls at the site cost ~27 B of code, this costs ~9 B plus a ~50 B
    helper once - a net win from the third site onwards.                       */
+#if defined(__clang__)
+#undef debug_kv
+#endif
 void debug_kv(const char code *tag, int16_t v) {
 	debug_puts(tag);
 	debug_i16(v);
 	debug_puts("\r\n");
 }
+#if defined(__clang__)
+#define debug_kv(tag, v) debug_kv((const char code *)(tag), (v))
+#endif
 #endif /* DEBUG_PRIMITIVES */
 
 #if UART_DEBUG && (RAW_EN || LINK_EN || LOCK_TRACE_EN)

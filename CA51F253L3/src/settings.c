@@ -323,12 +323,14 @@ static uint8_t settings_bank1_newer(uint16_t bank0, uint16_t bank1) {
 }
 
 uint8_t settings_restore(void) {
-	uint16_t generation0 = 0;
-	uint16_t generation1 = 0;
+	XDATA_TMP(uint16_t, generation0);
+	XDATA_TMP(uint16_t, generation1);
 	uint8_t valid0;
 	uint8_t valid1;
 	uint8_t selected;
 
+	generation0 = 0;
+	generation1 = 0;
 	DEBUG(SETTINGS_EN, { debug_puts("settings_restore()\r\n"); });
 	settings_active_bank = 0xFF;
 	settings_active_generation = 0;
