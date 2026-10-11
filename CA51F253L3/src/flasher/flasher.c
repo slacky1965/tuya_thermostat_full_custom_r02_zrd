@@ -43,19 +43,6 @@ static void show(uint8_t t, uint8_t u) {
 	INDEX = 2; LXDAT = u;
 }
 
-static void tx_byte(uint8_t b);
-
-static void hold_done_3s(void) {
-	uint8_t o;
-	/* volatile: clang deletes an empty delay loop as dead code (bench     */
-	/* 2026-10-10 - the ~3 s AL phase vanished and the reboot raced TLSR)  */
-	volatile uint8_t j;
-	for(o = 0; o < 30; o++) {
-		tx_byte(LNK_OTA_DONE);
-		for(j = 0; j < 255; j++) { }
-	}
-}
-
 /* Receive one byte with the bounded 100 ms contract; returns -1 on timeout. */
 static int16_t rx_byte_timed(void) {
 	uint16_t i;
@@ -106,7 +93,20 @@ static void tx_status(uint8_t status, uint16_t off) {
 	tx_byte((uint8_t)off);
 }
 
-#if UART_DEBUG && FLASHER_EN
+static void hold_done(uint8_t t) {
+    uint8_t o;
+    t *= 10;
+    for(o = 0; o < t; o++) {
+        tx_byte(LNK_OTA_DONE);
+        rx_byte_timed();
+    }
+}
+
+/* The flasher log is gated on FLASHER_EN ALONE: the flasher owns its own
+   polled UART0 (log_init below) and does not use debug.c, so requiring
+   UART_DEBUG as well would make the log unbuildable on SDCC builds whose
+   application no longer fits the extra debug code (bench 2026-10-10). */
+#if FLASHER_EN
 static void log_init(void) {
 	uint16_t reload = (uint16_t)(0x10000UL - (FOSC / (115200UL * 32UL)));
 
@@ -282,13 +282,12 @@ void main(void) {
 			tx_byte(LNK_OTA_DONE);
 			log_c('D'); log_c('\r'); log_c('\n');
 			show(CH_A, CH_L);
-			hold_done_3s();
+		    /* Hold 3 sec */
+			hold_done(3);
 #if defined(__clang__)
-			/* clang treats a call through a NULL function pointer as undefined  */
-			/* behaviour and DELETED this jump (bench 2026-10-10: after DONE     */
-			/* execution fell into the next function and hung on 'AL'; a manual  */
-			/* reset booted the new image). An unconditional assembly LJMP to    */
-			/* the flash reset vector is the honest spelling.                    */
+			/* An unconditional assembly LJMP to the flash
+			 * reset vector is the honest spelling.
+			 */
 			__asm__ volatile ("ljmp 0x0000");
 #else
 			((void (code *)(void))0x0000)();   /* never returns                */
