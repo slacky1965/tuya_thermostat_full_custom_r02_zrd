@@ -13,6 +13,7 @@ subdir_build:
 	$(MAKE) -C $(subdir_tlsr) all
 
 bootloader:
+	$(MAKE) -C $(subdir_tlsr) clean
 	$(MAKE) -C $(subdir_tlsr) -f makefile.bootloader
 
 bootloader-flash:
