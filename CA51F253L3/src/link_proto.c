@@ -704,7 +704,7 @@ static void lnk_send_error(const uart_frame_t xdata *f, uint8_t status) {
 void Link_OnFrame(const uart_frame_t xdata *f) {
 	uint8_t i;
 	uint8_t st;
-	uint8_t cmd_index;
+	XDATA_TMP(uint8_t, cmd_index);
 	/* Cached header bytes: the frame is assembled by the main-loop parser, so  */
 	/* it cannot change while we dispatch; re-reading f->field would reload the */
 	/* pointer and walk inc-dptr per field for every use (see lnk_validate).    */
@@ -962,7 +962,7 @@ uint8_t Link_TakeSettingChanged(uint8_t xdata *cmd) {
 /* from the main loop; both are sent with ACK and retried until confirmed.      */
 /********************************************************************************/
 void Link_UpdateStates(uint8_t power_on, uint8_t relay_on) {
-	uint8_t v;
+	XDATA_TMP(uint8_t, v);
 
 	v = power_on ? LNK_SYSMODE_HEAT : LNK_SYSMODE_OFF;
 	if(link_sysmode_tx == 0xFF) {
@@ -1015,9 +1015,13 @@ uint8_t Link_SendI16(uint8_t cmd, int16_t v) {
 }
 
 uint8_t Link_SendU8(uint8_t cmd, uint8_t type, uint8_t v) {
+	/* the queue copies the payload immediately, so the local copy only     */
+	/* needs to outlive the call (clang: value params live on the stack)    */
+	XDATA_TMP(uint8_t, tmp);
 	uint8_t accepted;
 
-	accepted = lnk_txq_post(cmd, UART_F_ACK | UART_F_CMD, type, 1, &v, 0);
+	tmp = v;
+	accepted = lnk_txq_post(cmd, UART_F_ACK | UART_F_CMD, type, 1, &tmp, 0);
 	if(!accepted) link_settings_retry = 0;
 	return accepted;
 }

@@ -99,5 +99,11 @@ void Ota_Poll(void) {
 		dst[i] = flasher_blob[i];
 	}
 	MECON |= 0x80;                     /* REMAP=1: XRAM -> code 0x8000 */
+#if defined(__clang__)
+	/* clang: function types may not carry an address space; a plain       */
+	/* function pointer is a code address (16-bit) and never returns here. */
+	((void (*)(void))0x8000)();
+#else
 	((void (code *)(void))0x8000)();   /* never returns                */
+#endif
 }

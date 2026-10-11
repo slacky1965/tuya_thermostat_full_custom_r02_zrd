@@ -57,7 +57,14 @@ volatile uint16_t xdata tick10ms;         /* real 10 ms ticks since boot     */
 
 uint16_t BTN_Tick10ms(void) {
 	uint16_t data value;
+#if defined(__clang__)
+	/* clang rejects address-space-qualified automatics; keep EA in MEMORY    */
+	/* (volatile): clang may otherwise leave the saved value in ACC, which    */
+	/* the MOVX below clobbers before the restore reads it back.              */
+	volatile unsigned char ea;
+#else
 	bit ea;
+#endif
 
 	ea = EA;
 	EA = 0;
@@ -292,7 +299,7 @@ static void Sched_Set_Leave(void) {
 /* every second, keeping a single place where the probes are read.                                                    */
 static void Temp_MeasureProbes(void) {
 	uint8_t v;
-	int16_t c100;
+	XDATA_TMP(int16_t, c100);
 
 	v = Temp_ReadC100Checked(TEMP_EXTERNAL, &c100);
 	Temp_Pipeline_Update(TEMP_EXTERNAL, c100, v,
@@ -304,8 +311,9 @@ static void Temp_MeasureProbes(void) {
 
 /**********************************************************************************************************************/
 void main(void) {
-	btn_id_t b = BTN_MENU;
+	XDATA_TMP(btn_id_t, b);
 
+	b = BTN_MENU;
 	xdata_clear();                      /* xdata is not cleared on reset          */
 	Temp_Pipeline_Init();
 
@@ -463,7 +471,7 @@ void main(void) {
 						else            { if(clk_set_w > 1) clk_set_w--; }
 					}
 					else {
-						uint8_t *fld = (clk_set == CLK_SET_HOUR) ? &clk_set_h : &clk_set_m;
+						uint8_t xdata *fld = (clk_set == CLK_SET_HOUR) ? &clk_set_h : &clk_set_m;
 						uint8_t  max = (clk_set == CLK_SET_HOUR) ? 23 : 59;
 
 						if(b == BTN_UP) {
@@ -599,13 +607,14 @@ void main(void) {
 				pwr_arm_tick = BTN_Tick10ms(); /* during the hold must not be       */
 				continue;                      /* toggled back by this arm          */
 			}
-			/* Eco chord: MENU+CLOCK held >= 2 s while ON -> toggle Economy         */
-			/* (ZCL ProgrammingOperationMode bit 2, PROG_MODE_ECO). Placed AFTER    */
-			/* the mode dispatch: an open mode owns the keys and swallows this      */
-			/* event, so the handler only ever runs on a free screen and may draw   */
-			/* the icons directly (M6 rule). The keypad-lock filter sits before it, */
-			/* so a locked panel ignores the gesture like every key except the      */
-			/* unlock chord.                                                        */
+
+			/* Eco chord: MENU+CLOCK held >= 2 s while ON -> toggle Economy                                            */
+			/* (ZCL ProgrammingOperationMode bit 2, PROG_MODE_ECO). Placed AFTER                                       */
+			/* the mode dispatch: an open mode owns the keys and swallows this                                         */
+			/* event, so the handler only ever runs on a free screen and may draw                                      */
+			/* the icons directly (M6 rule). The keypad-lock filter sits before it,                                    */
+			/* so a locked panel ignores the gesture like every key except the                                         */
+			/* unlock chord.                                                                                           */
 			if(b == BTN_CHORD2 && ev == BTN_EVT_CHORD2) {
 				if(power_on) {
 					uint8_t prev_pm = settings.progMode;
@@ -720,7 +729,7 @@ void main(void) {
 
 		/* link: an incoming System Mode command (from ZT3L) sets the power.   */
 		{
-			uint8_t sm;
+			XDATA_TMP(uint8_t, sm);
 			if(Link_TakeSysMode(&sm)) {
 				/* h_sysmode already restricted this to OFF/HEAT (0x00/0x04). */
 				settings.systemMode = (sm == LNK_SYSMODE_OFF) ? SYS_MODE_OFF
@@ -748,7 +757,7 @@ void main(void) {
 		/* Only while ON and idle: OFF leaves the dark screen to the lock/NET     */
 		/* owners, and a clock/schedule/menu mode owns the display otherwise.     */
 		{
-			uint8_t scmd;
+			XDATA_TMP(uint8_t, scmd);
 
 			if(Link_TakeSettingChanged(&scmd) && power_on && Screen_ModeFree()) {
 				Set_Win_Show(scmd);
@@ -1049,6 +1058,12 @@ void main(void) {
 			}
 			if(!Ota_IsPending()) {
 				Link_Tick1s();
+				/* Link_Tick1s may call Uart1_SendFrame(), whose compiler-     */
+				/* generated temporaries reuse the direct-RAM slots holding    */
+				/* these auto pointers - reload them before link traffic and   */
+				/* diagnostics dereference them below.                         */
+				in_sample = Temp_Pipeline_Get(TEMP_INTERNAL);
+				ext_sample = Temp_Pipeline_Get(TEMP_EXTERNAL);
 				if(Link_PeerAlive()) {
 					Link_ReportTemps(in_sample->accepted_c100, in_sample->accepted_valid,
 					                 ext_sample->accepted_c100, ext_sample->accepted_valid);

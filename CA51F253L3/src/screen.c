@@ -20,7 +20,7 @@ static uint8_t xdata bright_level /* = 0xFF */;  /* last level applied to the LE
 
 /* Base brightness for the current time of day: day 06:00-22:00, night the rest. */
 uint8_t Bright_LevelBase(void) {
-	uint8_t h;
+	XDATA_TMP(uint8_t, h);
 
 	RTC_ReadTime(&h, 0, 0, 0);
 	if((h >= 6) && (h < 22)) {
@@ -114,8 +114,8 @@ void Temp_Draw(const temp_sample_t xdata *sample) {
 
 /********************************************************************************/
 void Clock_Draw(void) {
-	uint8_t h;
-	uint8_t m;
+	XDATA_TMP(uint8_t, h);
+	XDATA_TMP(uint8_t, m);
 	uint8_t h24;
 
 	RTC_ReadTime(&h, &m, 0, 0);
