@@ -11,7 +11,8 @@
 
 Для сборки проекта под Windows нужно скачать несколько инструментов.
 
-- [SDCC](https://sdcc.sourceforge.net/snap.php) (обязательно)
+- [clang](https://github.com/devbis/llvm-mcs51/releases) (обязательно)
+- [SDCC](https://sdcc.sourceforge.net/snap.php) (опционально)
 - [Telink IoT Studio](https://doc.telink-semi.cn/tools/telink_iot_studio/TelinkIoTStudio_V2025.2.zip) (обязательно)
 - [Git for Windows](https://git-scm.com/install/windows?ref=faun) (рекомендуется)
 
