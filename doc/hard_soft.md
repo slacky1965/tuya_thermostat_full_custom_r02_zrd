@@ -79,7 +79,7 @@ make bootloader clean all
 
 <img src="images/board_uart.jpg"/>
 
-Предварительно проверяем на каком порту сидит на **USB-UART** адаптер и редактируем в корне проекта в makefile параметр CA51F2_PORT на тот, который у вас.
+Предварительно проверяем на каком порту сидит **USB-UART** адаптер и редактируем в корне проекта в makefile параметр CA51F2_PORT на тот, который у вас.
 
 <img src="images/makefile_port_ca51f2.jpg"/>
 
