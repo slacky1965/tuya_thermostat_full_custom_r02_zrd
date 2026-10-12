@@ -77,7 +77,8 @@ make bootloader clean all
 $ make flash-cachip
 ```
 
-Запускается небольшая программа **python**'е, которая и прошивает **CA51F253L3**. Программа немного модифицирована под себя. Оригинал - [https://github.com/MrdUkk/cachip-ispuartflasher](https://github.com/MrdUkk/cachip-ispuartflasher)
+> [!NOTE]
+> Запускается небольшая программа **python**'е, которая и прошивает **CA51F253L3**. Программа немного модифицирована под себя. Оригинал - [https://github.com/MrdUkk/cachip-ispuartflasher](https://github.com/MrdUkk/cachip-ispuartflasher)
 
 Тут есть два варианта. 
 
