@@ -3,6 +3,11 @@
 # execute. Recurse by the bare 'make' name so the shell resolves it via PATH.
 MAKE := make
 
+MAKEFLAGS += --no-print-directory
+
+CA51F2_PORT := COM4
+ZT3L_PORT := COM3
+
 subdir_ca51f2 := CA51F253L3
 subdir_tlsr := TLSR8258
 
@@ -17,17 +22,17 @@ bootloader:
 	$(MAKE) -C $(subdir_tlsr) -f makefile.bootloader
 
 bootloader-flash:
-	$(MAKE) -C $(subdir_tlsr) -f makefile.bootloader bootloader-flash
+	$(MAKE) -C $(subdir_tlsr) PORT=$(ZT3L_PORT) -f makefile.bootloader bootloader-flash
 
 clean:
 	$(MAKE) -C $(subdir_ca51f2) clean
 	$(MAKE) -C $(subdir_tlsr) clean
 	
 flash-cachip:
-	$(MAKE) -C $(subdir_ca51f2) flash-cachip
+	$(MAKE) -C $(subdir_ca51f2) PORT=$(CA51F2_PORT) flash-cachip
 	
 flash-orig-read-cachip:
-	$(MAKE) -C $(subdir_ca51f2) flash-orig-read-cachip
+	$(MAKE) -C $(subdir_ca51f2) PORT=$(CA51F2_PORT) flash-orig-read-cachip
 
 flash-orig-write-cachip:
 	$(MAKE) -C $(subdir_ca51f2) flash-orig-write-cachip
