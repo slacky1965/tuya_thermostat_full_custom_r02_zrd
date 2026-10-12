@@ -32,7 +32,7 @@
 /* Model string is sent without a terminator; keep it <= 16 chars so the                          */
 /* Info frame stays within LNK_INFO_MAX_LEN (see link_proto.h).                                   */
 #define DEVICE_MODEL        "osrctherm_r02" /* name, revision suffix _rNN                         */
-#define APP_VERSION         0x102           /* firmware version, BCD u16 BE                       */
+#define APP_VERSION         0x101           /* firmware version, BCD u16 BE                       */
                                             /* (hi byte = major, lo byte = minor; 0x100 = v1.00)  */
 #define CHIP_ID             0x20A0          /* hardware chip ID (u16 BE), CACHIP                  */
                                             /* 0x20A0 = CA51F253L3; exact ID in flash 0x2B area   */
