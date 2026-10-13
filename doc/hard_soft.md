@@ -1,105 +1,151 @@
-### Все материалы по железу взяты вот [отсюда](https://blog.softdev.online/index.php?controller=post&action=view&id_post=54)
+# Термостат: железо и прошивка
+
+Все материалы по железу взяты вот [отсюда](https://blog.softdev.online/index.php?controller=post&action=view&id_post=54).
+
+## Содержание
+
+- [1. Железо](#1-железо)
+- [2. Сборка проекта](#2-сборка-проекта)
+- [3. Как обновить](#3-как-обновить)
+  - [Этап 1. OTA-обновление ZT3L](#этап-1-ota-обновление-zt3l)
+  - [Этап 2. Прошивка CA51F253L3](#этап-2-прошивка-ca51f253l3)
 
 ---
 
-## Схема термостата.
+## 1. Железо
 
-<img src="images/schematic_high.jpg" alt="image" width="20%" height="auto"> <img src="images/schematic_low.jpg" alt="image" width="20%" height="auto" />
+### Схема термостата
 
+<img src="../doc/images/schematic_high.jpg" alt="Схема термостата, фрагмент 1" width="20%" height="auto"> <img src="../doc/images/schematic_low.jpg" alt="Схема термостата, фрагмент 2" width="20%" height="auto" />
 
-## Слаботочная плата термостата с экраном.
+*Схема термостата: два фрагмента*
 
-<img src="images/board_top.jpg" alt="image" width="18%" height="auto"> <img src="images/board_bottom.jpg" alt="image" width="18%" height="auto" />
+### Слаботочная плата термостата с экраном
+
+<img src="../doc/images/board_top.jpg" alt="Слаботочная плата, вид сверху" width="20%" height="auto"> <img src="../doc/images/board_bottom.jpg" alt="Слаботочная плата, вид снизу" width="20%" height="auto" />
+
+*Слаботочная плата: вид сверху и вид снизу*
 
 ---
 
-### Для сборки проекта под Windows нужно скачать несколько инструментов.
+## 2. Сборка проекта
 
-- [clang](https://github.com/devbis/llvm-mcs51/releases) (обязательно)
-- [SDCC](https://sdcc.sourceforge.net/snap.php) (опционально, по умолчанию сборка для **CA51F253L3** сделана на clang)
-- [Telink IoT Studio](https://doc.telink-semi.cn/tools/telink_iot_studio/TelinkIoTStudio_V2025.2.zip) (обязательно)
-- [Git for Windows](https://git-scm.com/install/windows?ref=faun) (рекомендуется)
+### Инструменты
+
+Для сборки проекта под Windows нужно скачать несколько инструментов.
+
+| Инструмент | Обязательность |
+| --- | --- |
+| [clang](https://github.com/devbis/llvm-mcs51/releases) | обязательно |
+| [SDCC](https://sdcc.sourceforge.net/snap.php) | опционально, по умолчанию сборка для **CA51F253L3** сделана на clang |
+| [Telink IoT Studio](https://doc.telink-semi.cn/tools/telink_iot_studio/TelinkIoTStudio_V2025.2.zip) | обязательно |
+| [Git for Windows](https://git-scm.com/install/windows?ref=faun) | рекомендуется |
 
 В системе должен быть инсталлирован **python**.
 
 Если нужно только прошить **CA51F253L3**, то **SDCC** и **Telink IoT Studio** можно не скачивать.
 
+### Сборка
+
 После установки всех компонентов запускаем **Git Bash** и переходим в папку проекта. Далее выполняем
 
-```
-make bootloader clean all
+```text
+$ make bootloader clean all
 ```
 
 Проверяем вывод компилятора. Должно собраться три основных файла - **bootloader** для **TLSR8258**, и по две **firmware** для **TLSR8258** и **CA51F253L3**. Попутно еще создаются образы **ОТА**. Все будет лежать в директории **bin**.
 
 ---
 
-## Как обновить.
+## 3. Как обновить
 
 Сразу скажу, обновить **CA51F253L3** по ОТА из оригинальной прошивки в кастомную нельзя. В протоколе Tuya есть такой механизм, но проектировщики этого термостата не реализовали такую возможность. Но с другой стороны, для перепрошивки **CA51F253L3** не нужен какой-то отдельный программатор. Достаточно обычного **USB-UART** адаптера.
 
 Итак. Обновление будет происходить в два этапа. Сначала по **ОТА** обновляем zigbee-модуль ZT3L. А затем мы уже прошьем проводами **CA51F253L3**.
 
-### Для начала нужно добавить оригинальный термостат в z2m.
+### Этап 1. OTA-обновление ZT3L
+
+#### Шаг 1. Добавление оригинального термостата в z2m
 
 У вас должно получиться что-то типа вот такого
 
-<img src="images/z2m_about_orig.jpg"/>
+<img src="../doc/images/z2m_about_orig.jpg" alt="Оригинальный термостат в z2m"/>
+
+*Оригинальный термостат в z2m*
+
+#### Шаг 2. Загрузка OTA-образа и запуск обновления
 
 Далее жмем на синее облачко и выбираем **custom firmware** и добавляем **ОТА** образ для обновления - [1141-d3a3-1111114b-osrctherm_r02_zrd_ZT3L.zigbee](https://github.com/slacky1965/tuya_thermostat_full_custom_r02_zrd/raw/refs/heads/main/bin/1141-d3a3-1111114b-osrctherm_r02_zrd_ZT3L.zigbee) и жмем обновить.
 
-<img src="images/z2m_update_zt3l_orig.jpg"/>
+<img src="../doc/images/z2m_update_zt3l_orig.jpg" alt="Добавление OTA-образа в z2m"/>
+
+*Добавление OTA-образа в z2m*
+
+#### Шаг 3. Проверка лога и результата
 
 Далее в логе можно наблюдать отчеты об обновлении.
 
-<img src="images/z2m_ota_update_log1.jpg"/>
+<img src="../doc/images/z2m_ota_update_log1.jpg" alt="Лог: обновление началось"/>
+
+*Лог: обновление началось*
 
 В процессе обновления в логе также можно увидеть информацию о кол-ве оставшихся секунд и процент загрузки.
 
-<img src="images/z2m_ota_update_log2.jpg"/>
+<img src="../doc/images/z2m_ota_update_log2.jpg" alt="Лог: оставшееся время и процент загрузки"/>
+
+*Лог: оставшееся время и процент загрузки*
 
 Также в логе можно наблюдать окончание обновления.
 
-<img src="images/z2m_ota_update_log3.jpg"/>
+<img src="../doc/images/z2m_ota_update_log3.jpg" alt="Лог: обновление завершено"/>
+
+*Лог: обновление завершено*
 
 После успешного обновления нужно разрешить добавление новых устройств в z2m и термостат сам подключится к сети уже с новым именем и адресом. Старую версию термостата принудительно удаляем. У вас должно получиться что-то в этом роде.
 
-<img src="images/z2m_about.jpg"/>
+<img src="../doc/images/z2m_about.jpg" alt="Термостат после обновления в z2m"/>
 
----
+*Термостат после обновления в z2m*
 
-### Следующий шаг - прошивка **CA51F253L3**. 
+### Этап 2. Прошивка CA51F253L3
 
-Для этого нужно обесточить термостат. 
+Для этого нужно обесточить термостат.
 
 > [!WARNING]
 > Внимание!!! При отсоединенной слаботочной плате нельзя подавать питание на силовую часть термостата!!!
 
 Нужно двинуть в сторону экран, отсоединить разъем и открутив 4 небольших самореза достать слаботочную плату. На ней нужно найти место с нераспаянным разъемом **J1**. Далее подключаем к **USB-UART** адаптеру согласно надписям на фото ниже - контакт **RX** на плате нужно подключать к **RX** адаптера, контакт **TX** на плате - к **TX** адаптера. Также подключаем **GND**, а вот **3v3** пока не подключаем.
 
-<img src="images/board_uart.jpg"/>
+<img src="../doc/images/board_uart.jpg" alt="Подключение USB-UART к разъему J1"/>
+
+*Подключение **USB-UART** к разъему **J1***
 
 Предварительно проверяем, на каком порту сидит **USB-UART** адаптер и редактируем в корне проекта в **makefile** параметр **CA51F2_PORT** на тот, который у вас.
 
-<img src="images/makefile_port_ca51f2.jpg"/>
+<img src="../doc/images/makefile_port_ca51f2.jpg" alt="Параметр CA51F2_PORT в makefile"/>
+
+*Параметр **CA51F2_PORT** в **makefile***
 
 Далее заходим в **Git Bash**, переходим в директорию проекта. И даем такую команду.
 
-```
+```text
 $ make flash-cachip
 ```
 
 > [!NOTE]
 > Запускается небольшая программа на **python**'е, которая и прошивает **CA51F253L3**. Программа немного модифицирована под себя. Оригинал - [https://github.com/MrdUkk/cachip-ispuartflasher](https://github.com/MrdUkk/cachip-ispuartflasher)
 
-Тут есть два варианта. 
+Тут есть два варианта.
 
 1. Чип прошьется.
-2. Программа напишет, что она ожидает 4 секунды для сброса или подачи питания. 
+2. Программа напишет, что она ожидает 4 секунды для сброса или подачи питания.
 
 Если у нас второй вариант, то в эти 4 секунды мы подаем питание **3v3** (мы же помним, что его не подавали). В конце концов должно получиться следующее.
 
-```
+<details>
+<summary>Пример вывода команды <b>make flash-cachip</b></summary>
+
+```text
 $ make flash-cachip
 make -C CA51F253L3 PORT=COM4 flash-cachip
 py ./tools/cachip-isp-serial_new.py COM4 upload ../bin/osrctherm_r02_v1.01_CA51F253L3.bin
@@ -136,9 +182,6 @@ got mcu success response
 end, remove power from MCU
 ```
 
----
+</details>
 
 Все. На этом можно термостат собирать обратно.
-
----
-
