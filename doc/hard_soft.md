@@ -18,13 +18,13 @@
 
 <img src="../doc/images/schematic_high.jpg" alt="Схема термостата, фрагмент 1" width="20%" height="auto"> <img src="../doc/images/schematic_low.jpg" alt="Схема термостата, фрагмент 2" width="20%" height="auto" />
 
-<p align="left"><em>Схема термостата: два фрагмента</em></p>
+<p align="center"><em>Схема термостата: два фрагмента</em></p>
 
 ### Слаботочная плата термостата с экраном
 
 <img src="../doc/images/board_top.jpg" alt="Слаботочная плата, вид сверху" width="20%" height="auto"> <img src="../doc/images/board_bottom.jpg" alt="Слаботочная плата, вид снизу" width="20%" height="auto" />
 
-<p align="left"><em>Слаботочная плата: вид сверху и вид снизу</em></p>
+<p align="center"><em>Слаботочная плата: вид сверху и вид снизу</em></p>
 
 ---
 
@@ -71,7 +71,7 @@ $ make bootloader clean all
 
 <img src="../doc/images/z2m_about_orig.jpg" alt="Оригинальный термостат в z2m"/>
 
-<p align="left"><em>Оригинальный термостат в z2m</em></p>
+<p align="center"><em>Оригинальный термостат в z2m</em></p>
 
 #### Шаг 2. Загрузка OTA-образа и запуск обновления
 
@@ -79,7 +79,7 @@ $ make bootloader clean all
 
 <img src="../doc/images/z2m_update_zt3l_orig.jpg" alt="Добавление OTA-образа в z2m"/>
 
-<p align="left"><em>Добавление OTA-образа в z2m</em></p>
+<p align="center"><em>Добавление OTA-образа в z2m</em></p>
 
 #### Шаг 3. Проверка лога и результата
 
@@ -87,25 +87,25 @@ $ make bootloader clean all
 
 <img src="../doc/images/z2m_ota_update_log1.jpg" alt="Лог: обновление началось"/>
 
-<p align="left"><em>Лог: обновление началось</em></p>
+<p align="center"><em>Лог: обновление началось</em></p>
 
 В процессе обновления в логе также можно увидеть информацию о кол-ве оставшихся секунд и процент загрузки.
 
 <img src="../doc/images/z2m_ota_update_log2.jpg" alt="Лог: оставшееся время и процент загрузки"/>
 
-<p align="left"><em>Лог: оставшееся время и процент загрузки</em></p>
+<p align="center"><em>Лог: оставшееся время и процент загрузки</em></p>
 
 Также в логе можно наблюдать окончание обновления.
 
 <img src="../doc/images/z2m_ota_update_log3.jpg" alt="Лог: обновление завершено"/>
 
-<p align="left"><em>Лог: обновление завершено</em></p>
+<p align="center"><em>Лог: обновление завершено</em></p>
 
 После успешного обновления нужно разрешить добавление новых устройств в z2m и термостат сам подключится к сети уже с новым именем и адресом. Старую версию термостата принудительно удаляем. У вас должно получиться что-то в этом роде.
 
 <img src="../doc/images/z2m_about.jpg" alt="Термостат после обновления в z2m"/>
 
-<p align="left"><em>Термостат после обновления в z2m</em></p>
+<p align="center"><em>Термостат после обновления в z2m</em></p>
 
 ### Этап 2. Прошивка CA51F253L3
 
@@ -118,13 +118,13 @@ $ make bootloader clean all
 
 <img src="../doc/images/board_uart.jpg" alt="Подключение USB-UART к разъему J1"/>
 
-<p align="left"><em>Подключение <b>USB-UART</b> к разъему <b>J1</b></em></p>
+<p align="center"><em>Подключение <b>USB-UART</b> к разъему <b>J1</b></em></p>
 
 Предварительно проверяем, на каком порту сидит **USB-UART** адаптер и редактируем в корне проекта в **makefile** параметр **CA51F2_PORT** на тот, который у вас.
 
 <img src="../doc/images/makefile_port_ca51f2.jpg" alt="Параметр CA51F2_PORT в makefile"/>
 
-<p align="left"><em>Параметр <b>CA51F2_PORT</b> в <b>makefile</b></em></p>
+<p align="center"><em>Параметр <b>CA51F2_PORT</b> в <b>makefile</b></em></p>
 
 Далее заходим в **Git Bash**, переходим в директорию проекта. И даем такую команду.
 
