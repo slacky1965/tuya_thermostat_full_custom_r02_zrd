@@ -78,6 +78,7 @@ extern "C" {
 #define DEBUG_WS_EN                     ON      /* wireless climate sensor reports */
 #define DEBUG_ZCL_CB_EN                 ON
 #define DEBUG_ZB_CB_EN                  ON
+#define DEBUG_ALIVE_EN                  ON      /* alive-watchdog UART reinit  */
 
 /* HCI interface */
 #define ZBHCI_UART                      OFF

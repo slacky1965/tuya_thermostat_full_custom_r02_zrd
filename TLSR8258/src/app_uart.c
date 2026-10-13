@@ -4,7 +4,7 @@
 #include "app_uart.h"
 
 /*********************************************************************************/
-/* CA51F2 <-> ZT3L link transport (serial.md v2): 66 BB | SEQ | FLAGS | STATUS | */
+/* CA51F2 <-> ZT3L link transport: 55 AA | SEQ | FLAGS | STATUS |               */
 /* CMD | DLC | [TYPE] | PAYLOAD(<=64) | CRC-8/MAXIM. Mirrors the CA51F2 parser.  */
 /*                                                                               */
 /* RX: the SDK drv_uart moves bytes to uart_rx_dma (u32 len + payload) and       */
@@ -65,6 +65,9 @@ static void uart_dump(const char *pfx, const uint8_t *b, uint16_t n) {
 	APP_DEBUG(DEBUG_PKT_EN, " 0x%08x\r\n", clock_time());
 }
 #endif
+
+/* Driver state (declared in drv_uart.c) - read-only here, for the TX-idle wait */
+extern drv_uart_t myUartDriver;
 
 static uint8_t uart_crc8(uint8_t crc, uint8_t b) {
 	uint8_t i;
@@ -221,6 +224,38 @@ void App_Uart_Init(uart_frame_cb_t cb) {
 	uart_ring_head = 0;
 	uart_ring_tail = 0;
 	uart_rx_overflow = 0;
+#if DEBUG_PKT_EN
+	uart_cap_i = 0;
+#endif
+
+	drv_uart_pin_set(GPIO_UART_TX, GPIO_UART_RX);
+	drv_uart_init(APP_UART_BAUDRATE, uart_rx_dma, APP_UART_RX_DMA_SIZE, uart_rx_cb);
+}
+
+/* Restore the UART subsystem without a chip reset (the alive watchdog's last
+ * resort: pins + drv_uart_init redo the boot-time uart_reset() and DMA re-arm,
+ * which is exactly what a reset used to do for the RX path). Called from the
+ * main loop between App_Uart_Poll() passes; the RX IRQ may still fire while it
+ * runs - uart_rx_cb only touches the ring, never the driver config - so a
+ * concurrent byte push is harmless. The frame callback is preserved.          */
+void App_Uart_Reinit(void) {
+	/* Let an in-flight frame drain (<= ~7 ms for the longest frame at 115200);
+	   the wait is bounded so a wedged TX state can never hang the main loop.  */
+	uint32_t t0 = clock_time();
+
+	while (myUartDriver.status == UART_STA_TX_DOING &&
+	       (int32_t)(clock_time() - t0 -
+	                  8 * CLOCK_16M_SYS_TIMER_CLK_1MS) < 0)
+		;
+
+	/* Drop whatever the old state accumulated (same restart SetRaw does).    */
+	uart_ring_head = 0;
+	uart_ring_tail = 0;
+	uart_fsm_st  = FRM_SYNC1;
+	uart_fsm_i   = 0;
+	uart_fsm_crc = 0x00;
+	uart_rx_epoch = 0;
+	uart_rx_epoch_seen = 0;
 #if DEBUG_PKT_EN
 	uart_cap_i = 0;
 #endif
