@@ -13,6 +13,14 @@
 #define LINK_REQ_CYCLE_TICKS    (30  * CLOCK_16M_SYS_TIMER_CLK_1S)   /* 30 s      */
 #define LINK_REQ_TRIES          3                                    /* per cycle */
 
+/* Alive watchdog (UART self-heal): one empty Req per window, any incoming   */
+/* frame counts as an answer, LINK_ALIVE_MAX_STRIKES silent windows in a row */
+/* trigger App_Uart_Reinit() - the same uart_reset() + DMA re-arm a chip     */
+/* reset performs. A TX-abort there costs at most one torn frame, which the  */
+/* CRC-protected link drops and the peer's retry logic covers.               */
+#define LINK_ALIVE_PERIOD_TICKS (60  * CLOCK_16M_SYS_TIMER_CLK_1S)   /* 60 s   */
+#define LINK_ALIVE_MAX_STRIKES  3
+
 #define LNK_REQ_IDLE         0
 #define LNK_REQ_WAIT_SEND    1
 #define LNK_REQ_WAIT_RSP     2
@@ -87,6 +95,9 @@ static uint16_t link_ca51f2_ver;                       /* CA51F2 APP_VERSION    
 static uint8_t  link_ca51f2_alive;                     /* Info RSP received     */
 static uint8_t  link_ota_rsp_status = 0xFF;            /* OTA_START RSP status  */
 static uint8_t  link_ota_rsp_seq;
+static uint32_t link_alive_deadline;                   /* next watchdog tick    */
+static uint8_t  link_alive_strike;                     /* silent windows        */
+static uint8_t  link_alive_rx;                         /* frame seen, window    */
 
 static uint8_t link_next_seq(void) {
 	if (++link_seq == 0) link_seq = 1;
@@ -331,6 +342,9 @@ void App_Link_Init(void) {
 	for(i = 0; i < 7; i++) link_pending_schedule_seq[i] = 0;
 	link_ota_rsp_status = 0xFF;
 	link_ota_rsp_seq = 0;
+	link_alive_deadline = clock_time() + LINK_ALIVE_PERIOD_TICKS;
+	link_alive_strike = 0;
+	link_alive_rx = 0;
 	link_handshake_restart(LINK_BOOT_DELAY_TICKS);
 	link_net_reported = link_read_net_status();
 }
@@ -373,6 +387,29 @@ static void link_net_report(void) {
 	}
 }
 
+/* Alive watchdog: close one 60 s window, then ping the CA51F2. A window      */
+/* with any incoming frame clears the strike counter (also cleared the        */
+/* moment the frame arrived - App_Link_OnFrame); a silent one strikes, and    */
+/* LINK_ALIVE_MAX_STRIKES in a row re-init the UART subsystem. The ping is    */
+/* fire-and-forget on a fresh SEQ: it deliberately bypasses the reliable      */
+/* queue (a ping must not steal a settings slot and its error reply must not  */
+/* arm the non-OK -> STATE_ALL resync).                                       */
+static void link_alive_poll(void) {
+	if (!link_time_after(link_alive_deadline)) return;
+	link_alive_deadline = clock_time() + LINK_ALIVE_PERIOD_TICKS;
+
+	if (link_alive_rx) {
+		link_alive_rx = 0;
+		link_alive_strike = 0;
+	}
+	else if (++link_alive_strike >= LINK_ALIVE_MAX_STRIKES) {
+		App_Uart_Reinit();
+		APP_DEBUG(DEBUG_ALIVE_EN, "uart reinit\r\n");
+		link_alive_strike = 0;
+	}
+	App_Uart_SendFrame(link_next_seq(), UART_F_ACK, 0, LNK_CMD_ALIVE, 0, 0, 0);
+}
+
 void App_Link_Poll(void) {
 	if (link_info_state != LNK_REQ_IDLE &&
 	    (!App_Ota_IsActive() || App_Ota_InfoAllowed())) {
@@ -382,6 +419,7 @@ void App_Link_Poll(void) {
 		link_txq_poll();
 		link_pending_retry();
 		link_net_report();
+		link_alive_poll();
 	}
 }
 
@@ -790,7 +828,15 @@ static void app_link_send_error(const uart_frame_t *f, uint8_t status) {
 }
 
 void App_Link_OnFrame(const uart_frame_t *f) {
-	uint8_t st = app_link_validate(f);
+	uint8_t st;
+
+	/* Liveness: any CRC-valid frame from the peer proves the RX path works.  */
+	/* Counted before validation on purpose - even an UNSUPPORT reply from an */
+	/* older CA51F2 that does not know ALIVE still means the wire is alive.   */
+	link_alive_rx = 1;
+	link_alive_strike = 0;
+
+	st = app_link_validate(f);
 
 	if(st != LNK_ST_OK) {
 		app_link_send_error(f, st);

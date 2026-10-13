@@ -244,7 +244,7 @@ clean:
 
 .PHONY: flash-cachip
 flash-cachip: $(OUT).bin
-	$(PYTHON) $(CACHIP_ISP) $(PORT) upload $(OUT).bin
+	$(PYTHON) $(CACHIP_ISP) $(PORT) upload $(COMMON_BIN)/$(PROJ).bin
 
 flash-orig-write-cachip:
 	$(PYTHON) $(CACHIP_ISP) $(PORT) upload $(ORIG_FW)

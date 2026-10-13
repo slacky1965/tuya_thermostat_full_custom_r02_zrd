@@ -23,6 +23,10 @@ typedef void (*uart_frame_cb_t)(const uart_frame_t *f);
 
 /* Init UART0 + DMA RX; cb receives every CRC-valid frame (called from Poll).   */
 void App_Uart_Init(uart_frame_cb_t cb);
+/* Restore the UART subsystem in place (pins + driver re-init, ring and parser  */
+/* restart) - the alive watchdog's recovery from a wedged RX state. The frame   */
+/* callback is preserved; pending input is dropped.                             */
+void App_Uart_Reinit(void);
 /* Feed pending RX bytes into the frame parser (call periodically, e.g. from    */
 /* app_task); dispatches completed frames to the callback.                      */
 void App_Uart_Poll(void);

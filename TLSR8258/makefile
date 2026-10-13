@@ -4,7 +4,7 @@ PROJECT_NAME := osrctherm_r02_zrd
 #tuya_thermostat_full_custom_r02_zrd
 
 # Set the serial port number for downloading the firmware
-DOWNLOAD_PORT ?= COM3
+PORT ?= COM3
 
 COMPILE_OS = $(shell uname -o 2>/dev/null)
 LINUX_OS = GNU/Linux
@@ -152,42 +152,42 @@ sizedummy \
 all: pre-build main-build
 
 flash: $(BIN_FILE)
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m we 0x8000 $(BIN_FILE)
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s -m we 0x8000 $(BIN_FILE)
 
 flash-orig-write:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m we 0 $(BIN_PATH)/orig/firmware_ZT3L_TZE204_orig.bin
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s -m we 0 $(BIN_PATH)/orig/firmware_ZT3L_orig.bin
 	
 flash-orig-read:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m rf 0 0x100000 firmware_ZT3L_TZE204_orig.bin
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s -m rf 0 0x100000 firmware_ZT3L_orig.bin
 	
 erase-flash:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s ea
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s ea
 
 #erase-flash:
-#	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s es 0x0 0xfc000
-#	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s es 0xff000 0x1000
+#	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s es 0x0 0xfc000
+#	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s es 0xff000 0x1000
 	
 erase-flash-fimware:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s es 0x8000 0xF4000
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s es 0xff000 0x1000
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s es 0x8000 0xF4000
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s es 0xff000 0x1000
 
 erase-flash-bootloader:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s es 0x0 0x8000
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s es 0x0 0x8000
 
 erase-flash-macaddr:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s es 0xFF000 0x1000
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s es 0xFF000 0x1000
 
 flash-bootloader:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m we 0 $(BOOTLOADER)
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s -m we 0 $(BOOTLOADER)
 	
 flash-ota:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m we 0x70000 $(FW_FILE)
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s -m we 0x70000 $(FW_FILE)
 
 reset:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -t50 -a2550 -m -w i
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s -t50 -a2550 -m -w i
 
 test-flash:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -s i
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -s i
 
 # Main-build Target
 main-build: clean-project $(ELF_FILE) secondary-outputs

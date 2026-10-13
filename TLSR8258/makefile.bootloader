@@ -2,7 +2,7 @@
 PROJECT_NAME := bootloader
 
 # Set the serial port number for downloading the firmware
-DOWNLOAD_PORT := COM3
+PORT := COM3
 
 COMPILE_OS = $(shell uname -o)
 LINUX_OS = GNU/Linux
@@ -105,7 +105,7 @@ sizedummy \
 bootloader: pre-build main-build
 
 bootloader-flash:
-	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(DOWNLOAD_PORT) -z11 -a 100 -s -m we 0 $(BIN_FILE)
+	@python3 $(TOOLS_PATH)/TlsrPgm.py -p$(PORT) -z11 -a 100 -s -m we 0 $(BIN_FILE)
 
 # Main-build Target
 main-build: clean $(ELF_FILE) secondary-outputs

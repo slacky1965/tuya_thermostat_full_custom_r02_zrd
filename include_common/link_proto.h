@@ -73,6 +73,8 @@
 #define LNK_CMD_SCHED_FRI        0x24   /* RAW(24), Friday                       */
 #define LNK_CMD_SCHED_SAT        0x25   /* RAW(24), Saturday                     */
 #define LNK_CMD_SCHED_SUN        0x26   /* RAW(24), Sunday                       */
+#define LNK_CMD_ALIVE            0x2B   /* Req (ACK, DLC 0): liveness probe, OK  */
+
 #define LNK_CMD_CA51F2_BOOT      0x2A   /* Cmd: display MCU (re)started, asks    */
                                         /*   the peer to run a fresh Info        */
 #define LNK_CMD_FACTORY_RESET    0x27   /* action: restore defaults              */

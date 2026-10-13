@@ -554,6 +554,15 @@ static void h_state_all(link_ctx_t xdata *cx) {
 	link_dump_deadline = BTN_Tick10ms();   /* first frame now */
 	link_dump_active   = 1;
 }
+/*************************************************************************************************************************/
+/* Handler: LNK_CMD_ALIVE (0x2B) - empty liveness probe from the TLSR (the peer's UART watchdog). The generic OK reply   */
+/* emitted by the dispatcher below the table is the whole response; any CRC-valid frame counts as proof of life on the   */
+/* TLSR side, so this handler deliberately produces no data of its own.                                                  */
+/*************************************************************************************************************************/
+static void h_alive(link_ctx_t xdata *cx) {
+	(void)cx;
+}
+
 /***********************************************************************************************************************/
 /* Wireless climate sensor (WS) telemetry: LNK_CMD_TEMP_NET (0x04, i16 x100) and                                       */
 /* LNK_CMD_HUMID_NET (0x06, u16 x100). The ZT3L has already validated the ZCL report bounds; we only store the last    */
@@ -613,6 +622,7 @@ static const lnk_cmd_t code lnk_table[] =
 	{ LNK_CMD_OTA_START, 6, LNK_T_RAW, LNK_ROLE_CMD, Ota_OnStart },
 	{ LNK_CMD_TEMP_NET, 2, LNK_T_I16, LNK_ROLE_REPORT | LNK_ROLE_CMD, h_ws },
 	{ LNK_CMD_HUMID_NET, 2, LNK_T_U16, LNK_ROLE_REPORT | LNK_ROLE_CMD, h_ws },
+	{ LNK_CMD_ALIVE, 0, 0, LNK_ROLE_REQ, h_alive },
 };
 
 #define LNK_SCHED_TABLE_INDEX 15
@@ -787,12 +797,16 @@ void Link_OnFrame(const uart_frame_t xdata *f) {
 	}
 
 	/* Pre-handshake exceptions: only the handshake itself, the peer's          */
-	/* net-status push/request and the OTA start. Everything else - including   */
+	/* net-status push/request, the OTA start and the liveness probe.           */
+	/* Everything else - including                                              */
 	/* TIME and the schedule days - is a mutating/late frame: NOT_READY. The    */
 	/* old `TIME/SCHED && flags == ACK` clause existed for their Req roles,     */
-	/* both removed as dead (TIME 2026-09-30, SCHED 2026-10-02).                */
+	/* both removed as dead (TIME 2026-09-30, SCHED 2026-10-02). ALIVE always   */
+	/* answers OK: the TLSR counts ANY reply as proof of life, and an error     */
+	/* before the peer's own Info exchange would only add noise.                */
 	if(!link_peer_alive && cmd != LNK_CMD_INFO &&
-	   cmd != LNK_CMD_NET_STATUS && cmd != LNK_CMD_OTA_START) {
+	   cmd != LNK_CMD_NET_STATUS && cmd != LNK_CMD_OTA_START &&
+	   cmd != LNK_CMD_ALIVE) {
 		lnk_send_error(f, LNK_ST_NOT_READY);
 		return;
 	}
