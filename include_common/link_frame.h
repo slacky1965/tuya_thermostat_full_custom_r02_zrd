@@ -3,13 +3,13 @@
 /************************************************************************************************/
 /* Frame layer shared by CA51F2 and ZT3L/TLSR8258. Self-contained:                              */
 /* pure #define constants, no types, no includes.                                               */
-/*   55 AA | SEQ | FLAGS | STATUS | CMD | DLC | [TYPE] | PAYLOAD(<=64) | CRC                    */
+/*   AA 55 | SEQ | FLAGS | STATUS | CMD | DLC | [TYPE] | PAYLOAD(<=64) | CRC                    */
 /*   TYPE is present only when DLC>0 (no payload -> CRC right after DLC).                       */
 /*   CRC-8/MAXIM: poly 0x31 (reflected 0x8C), init 0x00, xorout 0, over                         */
 /*   Header..Payload. Multi-byte numbers are big-endian.                                        */
 /************************************************************************************************/
-#define UART_FRAME_H0        0x55                               /* header byte 0                */
-#define UART_FRAME_H1        0xAA                               /* header byte 1                */
+#define UART_FRAME_H0        0xAA                               /* header byte 0                */
+#define UART_FRAME_H1        0x55                               /* header byte 1                */
 #define UART_FRAME_PAYLOAD   64                                 /* max Payload bytes per frame  */
 #define UART_FRAME_MAX       (7 + 1 + UART_FRAME_PAYLOAD + 1)   /* 73 bytes                     */
 

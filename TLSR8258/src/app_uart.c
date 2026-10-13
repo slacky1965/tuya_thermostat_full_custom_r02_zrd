@@ -4,7 +4,7 @@
 #include "app_uart.h"
 
 /*********************************************************************************/
-/* CA51F2 <-> ZT3L link transport: 55 AA | SEQ | FLAGS | STATUS |                */
+/* CA51F2 <-> ZT3L link transport: AA 55 | SEQ | FLAGS | STATUS |                */
 /* CMD | DLC | [TYPE] | PAYLOAD(<=64) | CRC-8/MAXIM. Mirrors the CA51F2 parser.  */
 /*                                                                               */
 /* RX: the SDK drv_uart moves bytes to uart_rx_dma (u32 len + payload) and       */

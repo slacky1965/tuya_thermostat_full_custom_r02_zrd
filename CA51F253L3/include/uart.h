@@ -76,7 +76,7 @@ void Uart1_Initial(void);
 /* with main(), so this declaration must stay in a header main.c includes.     */
 void UART1_ISR (void) __interrupt (6);
 /*******************************************************************************/
-/* CA51F2 <-> ZT3L link protocol (header 0x55 0xAA).                           */
+/* CA51F2 <-> ZT3L link protocol (header 0xAA 0x55).                           */
 /* Frame-level constants (header, flags, payload size, CRC poly) are SHARED    */
 /* with the ZT3L/TLSR8258 side in include_common/link_frame.h.                 */
 /*******************************************************************************/

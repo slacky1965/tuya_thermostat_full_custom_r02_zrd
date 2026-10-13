@@ -5,7 +5,7 @@
 /* CA51F2 <-> ZT3L link: dispatcher + handler API. The protocol constants       */
 /* (entity IDs, status codes, enums, INFO layout) are SHARED with the TLSR8258  */
 /* side and live in the self-contained include_common/link_proto.h (root).      */
-/* The frame layer (55 AA ... CRC) is the local uart.c; handlers never re-check */
+/* The frame layer (AA 55 ... CRC) is the local uart.c; handlers never re-check */
 /* CRC. This header pulls in the shared map and adds the C51 code model types.  */
 /********************************************************************************/
 #include "include/stdint.h"
