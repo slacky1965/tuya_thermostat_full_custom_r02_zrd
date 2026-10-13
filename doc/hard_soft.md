@@ -16,15 +16,17 @@
 
 ### Схема термостата
 
+<div align="center">
 <img src="../doc/images/schematic_high.jpg" alt="Схема термостата, фрагмент 1" width="20%" height="auto"> <img src="../doc/images/schematic_low.jpg" alt="Схема термостата, фрагмент 2" width="20%" height="auto" />
-
 <p align="center"><em>Схема термостата: два фрагмента</em></p>
+</div>
 
 ### Слаботочная плата термостата с экраном
 
+<div align="center">
 <img src="../doc/images/board_top.jpg" alt="Слаботочная плата, вид сверху" width="20%" height="auto"> <img src="../doc/images/board_bottom.jpg" alt="Слаботочная плата, вид снизу" width="20%" height="auto" />
-
 <p align="center"><em>Слаботочная плата: вид сверху и вид снизу</em></p>
+</div>
 
 ---
 
@@ -69,43 +71,49 @@ $ make bootloader clean all
 
 У вас должно получиться что-то типа вот такого
 
+<div align="center">
 <img src="../doc/images/z2m_about_orig.jpg" alt="Оригинальный термостат в z2m"/>
-
 <p align="center"><em>Оригинальный термостат в z2m</em></p>
+</div>
 
 #### Шаг 2. Загрузка OTA-образа и запуск обновления
 
 Далее жмем на синее облачко и выбираем **custom firmware** и добавляем **ОТА** образ для обновления - [1141-d3a3-1111114b-osrctherm_r02_zrd_ZT3L.zigbee](https://github.com/slacky1965/tuya_thermostat_full_custom_r02_zrd/raw/refs/heads/main/bin/1141-d3a3-1111114b-osrctherm_r02_zrd_ZT3L.zigbee) и жмем обновить.
 
+<div align="center">
 <img src="../doc/images/z2m_update_zt3l_orig.jpg" alt="Добавление OTA-образа в z2m"/>
-
 <p align="center"><em>Добавление OTA-образа в z2m</em></p>
+</div>
 
 #### Шаг 3. Проверка лога и результата
 
 Далее в логе можно наблюдать отчеты об обновлении.
 
+<div align="center">
 <img src="../doc/images/z2m_ota_update_log1.jpg" alt="Лог: обновление началось"/>
-
 <p align="center"><em>Лог: обновление началось</em></p>
+</div>
 
 В процессе обновления в логе также можно увидеть информацию о кол-ве оставшихся секунд и процент загрузки.
 
+<div align="center">
 <img src="../doc/images/z2m_ota_update_log2.jpg" alt="Лог: оставшееся время и процент загрузки"/>
-
 <p align="center"><em>Лог: оставшееся время и процент загрузки</em></p>
+</div>
 
 Также в логе можно наблюдать окончание обновления.
 
+<div align="center">
 <img src="../doc/images/z2m_ota_update_log3.jpg" alt="Лог: обновление завершено"/>
-
 <p align="center"><em>Лог: обновление завершено</em></p>
+</div>
 
 После успешного обновления нужно разрешить добавление новых устройств в z2m и термостат сам подключится к сети уже с новым именем и адресом. Старую версию термостата принудительно удаляем. У вас должно получиться что-то в этом роде.
 
+<div align="center">
 <img src="../doc/images/z2m_about.jpg" alt="Термостат после обновления в z2m"/>
-
 <p align="center"><em>Термостат после обновления в z2m</em></p>
+</div>
 
 ### Этап 2. Прошивка CA51F253L3
 
@@ -116,15 +124,17 @@ $ make bootloader clean all
 
 Нужно двинуть в сторону экран, отсоединить разъем и открутив 4 небольших самореза достать слаботочную плату. На ней нужно найти место с нераспаянным разъемом **J1**. Далее подключаем к **USB-UART** адаптеру согласно надписям на фото ниже - контакт **RX** на плате нужно подключать к **RX** адаптера, контакт **TX** на плате - к **TX** адаптера. Также подключаем **GND**, а вот **3v3** пока не подключаем.
 
+<div align="center">
 <img src="../doc/images/board_uart.jpg" alt="Подключение USB-UART к разъему J1"/>
-
 <p align="center"><em>Подключение <b>USB-UART</b> к разъему <b>J1</b></em></p>
+</div>
 
 Предварительно проверяем, на каком порту сидит **USB-UART** адаптер и редактируем в корне проекта в **makefile** параметр **CA51F2_PORT** на тот, который у вас.
 
+<div align="center">
 <img src="../doc/images/makefile_port_ca51f2.jpg" alt="Параметр CA51F2_PORT в makefile"/>
-
 <p align="center"><em>Параметр <b>CA51F2_PORT</b> в <b>makefile</b></em></p>
+</div>
 
 Далее заходим в **Git Bash**, переходим в директорию проекта. И даем такую команду.
 
