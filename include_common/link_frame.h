@@ -1,7 +1,7 @@
 #ifndef _LINK_FRAME_H_
 #define _LINK_FRAME_H_
 /************************************************************************************************/
-/* Frame layer shared by CA51F2 and ZT3L/TLSR8258. Self-contained:              */
+/* Frame layer shared by CA51F2 and ZT3L/TLSR8258. Self-contained:                              */
 /* pure #define constants, no types, no includes.                                               */
 /*   55 AA | SEQ | FLAGS | STATUS | CMD | DLC | [TYPE] | PAYLOAD(<=64) | CRC                    */
 /*   TYPE is present only when DLC>0 (no payload -> CRC right after DLC).                       */
