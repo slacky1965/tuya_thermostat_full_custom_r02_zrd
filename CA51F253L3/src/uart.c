@@ -129,7 +129,7 @@ void UART0_ISR (void) __interrupt (4) {
 #endif
 #ifdef UART1_EN
 /********************************************************************************/
-/* CA51F2 <-> ZT3L link framing: 55 AA | SEQ | FLAGS | STATUS |                 */
+/* CA51F2 <-> ZT3L link framing: AA 55 | SEQ | FLAGS | STATUS |                 */
 /* CMD | DLC | [TYPE] | PAYLOAD(<=64) | CRC. Type is present only when          */
 /* DLC>0 (no payload = no type; CRC comes right after DLC).                     */
 /* CRC-8/MAXIM (poly 0x31, reflected 0x8C, init 0x00, xorout 0) covers          */
@@ -152,9 +152,9 @@ static volatile uint16_t xdata uart1_rx_overflow;
 
 /*********************************************************************************/
 /* UART link trace (debug): dump every RX/TX frame as raw hex, one line each.    */
-/*   L> 55 AA .. CRC    sent by us                                               */
-/*   L< 55 AA .. CRC    received and accepted                                    */
-/*   L< 55 AA .. CRC !  received but rejected (bad CRC / oversized DLC)          */
+/*   L> AA 55 .. CRC    sent by us                                               */
+/*   L< AA 55 .. CRC    received and accepted                                    */
+/*   L< AA 55 .. CRC !  received but rejected (bad CRC / oversized DLC)          */
 /* The bytes are printed AS THEY ARRIVE (streaming) instead of being copied into */
 /* a uart_raw[] image of the whole frame: that copy alone cost 73 B of XRAM,     */
 /* which a debug build cannot spare, and the reject marker therefore moved from  */

@@ -6,7 +6,7 @@
 #include "app_uart.h"
 
 /* ZT3L side of the CA51F2 <-> ZT3L link protocol (serial.md).
-   Boot handshake initiator: after a 5 s power-on delay send an Info Req, retry
+   Boot handshake initiator: after a 1 s power-on delay send an Info Req, retry
    3x/100 ms then repeat every 30 s until the first reply; answer Net-status
    requests and push a Net-status report on change. */
 void App_Link_Init(void);

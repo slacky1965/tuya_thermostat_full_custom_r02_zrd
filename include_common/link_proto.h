@@ -49,7 +49,7 @@
 #define LNK_CMD_SENSOR_SRC       0x0C   /* enum u8, LNK_SENSOR_*                 */
 #define LNK_CMD_CAL_ACTIVE       0x0D   /* i8 x10 (ZCL 0.1 C)                    */
 #define LNK_CMD_CAL_EXTERNAL     0x0E   /* i8 x10 (ZCL 0.1 C)                    */
-#define LNK_CMD_HYSTERESIS       0x0F   /* i8 x10 (10..50 = 1.0..5.0 C)          */
+#define LNK_CMD_HYSTERESIS       0x0F   /* i8 x10 (5..25 = 0.5..2.5 C)           */
 #define LNK_CMD_LIMIT_MIN        0x10   /* i16 x100                              */
 #define LNK_CMD_LIMIT_MAX        0x11   /* i16 x100                              */
 #define LNK_CMD_FROST_PROTECT    0x12   /* i16 x100                              */
@@ -103,10 +103,11 @@
 
 /* Reserved: spare 0xE0-0xFF (serial.md).                                     */
 
-/*** Status codes (ONLY in replies: 0x00 = OK, != 0 = error) ***************** */
-/* High nibble = class: 0x1x frame/protocol, 0x2x value, 0x3x state, 0x4x      */
-/* internal. Reports/commands (ACK=0) carry Status 0 and are never answered.   */
-/* Check order: Flags -> DLC -> Type -> support -> range -> state.             */
+/*** Status codes (ONLY in replies: 0x00 = OK, != 0 = error) *****************   */
+/* High nibble = class: 0x1x frame/protocol, 0x2x value, 0x3x state, 0x4x        */
+/* internal. Reports and commands carry Status 0; only reports (ACK=0) get no    */
+/* reply - a command (ACK|CMD) is always answered. Check order: Flags -> DLC ->  */
+/* role -> length -> type -> range -> state.                                     */
 #define LNK_ST_OK                0x00   /* done / data                          */
 
 /* 0x1x frame / protocol                                                       */
