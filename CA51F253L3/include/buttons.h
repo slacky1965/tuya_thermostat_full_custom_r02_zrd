@@ -38,8 +38,8 @@ typedef enum
 /* Two independent two-button chords, either press order:                        */
 /*   chord 1: BTN_UP + BTN_DOWN      -> keypad lock  (BTN_EVT_CHORD,  id 5)      */
 /*   chord 2: BTN_MENU + BTN_CLOCK   -> Eco toggle    (BTN_EVT_CHORD2, id 6)     */
-/* The MENU+CLOCK pair was freed when the lock chord moved to the arrows         */
-/* (2026-10-03). While both keys of a chord are down they emit NO individual     */
+/* The MENU+CLOCK pair became the Eco toggle when the lock chord moved to the    */
+/* arrows. While both keys of a chord are down they emit NO individual           */
 /* events; once both have stayed down for the pair's 10MS_TICKS (total, from     */
 /* the FIRST press) a single event is queued with the pair's pseudo id.          */
 /* Driver-level gestures: the state machine runs per pair, the app decides       */

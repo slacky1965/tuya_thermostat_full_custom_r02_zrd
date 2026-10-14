@@ -1,7 +1,7 @@
 /* Define this TU as THE owner of the XSFR bodies: ca51f2xsfr.h emits the
    XRAM_U8/U16 definitions only when _MAIN_C_ is set, every other TU sees
    externs (this used to come from the file's include guard, which was
-   removed 2026-10-02 at the owner's request - the switch stays). */
+   removed - the switch stays). */
 #define _MAIN_C_
 #include "include/stdint.h"
 #include "include/config.h"
@@ -691,7 +691,7 @@ void main(void) {
 					                set_need_save = 1;
 					}
 					/* value window shared with the network/menu Set window (ROM      */
-					/* saving 2026-09-30): identical 7 s, SYM_SET/SYM_HOME/digits,    */
+					/* saving): identical 7 s, SYM_SET/SYM_HOME/digits,               */
 					/* and the preamble also clears a lingering %RH icon.             */
 					Set_Win_Show(LNK_CMD_SETPOINT_HEAT);
 					continue;

@@ -926,7 +926,7 @@ void App_Link_OnFrame(const uart_frame_t *f) {
 		/* Gated on OUR Info handshake: a dump started earlier would be       */
 		/* rejected NOT_READY by our own gate and make the CA51F2 retry the   */
 		/* same frame every 100 ms until the late Info aborts it (storm       */
-		/* seen on the bench 2026-09-27). The dump is not lost: the Info RSP  */
+		/* seen on the bench). The dump is not lost: the Info RSP             */
 		/* re-arms link_state_req_done and CA51F2's h_info answers with a     */
 		/* fresh Net-status request, which re-enters this case with the gate  */
 		/* open.                                                              */
@@ -956,7 +956,7 @@ void App_Link_OnFrame(const uart_frame_t *f) {
 		break;
 
 	case LNK_CMD_RUNNING:
-		/* BITMAP16 big-endian (wire alignment 2026-09-26): payload[0] is    */
+		/* BITMAP16 big-endian (wire alignment): payload[0] is               */
 		/* the HIGH byte - the old 1-byte read stored 0 for Heat (Idle).     */
 		if (f->len == 2)
 			g_zcl_thermostatAttrs.runningState =
