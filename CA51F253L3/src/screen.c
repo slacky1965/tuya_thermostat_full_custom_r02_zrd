@@ -91,7 +91,31 @@ const temp_sample_t xdata *Temp_DisplaySample(void) {
 /* sample shows "Er" (the degree C stays lit) instead of a stale number.       */
 /* In AL a dead probe of EITHER kind shows "Er": the pair drives the relay, so */
 /* a half-dead pair must not look healthy on screen.                           */
+
+/* AL "Er" alternation state: while one probe of the AL pair is dead the       */
+/* display cycles between the survivor's temperature and "Er", so the value    */
+/* the relay actually heats by stays visible. The machine is driven by         */
+/* Temp_ErPoll() on the 100 ms main-loop grid; phase lengths live in config.h. */
+static uint16_t xdata er_alt_deadline;  /* tick10ms time of the next flip      */
+static bit er_alt_run;                  /* 1 = the machine is cycling          */
+static bit er_alt_lit;                  /* 1 = the current phase shows "Er"    */
+
+/* 1 = the AL pair is half-dead and no fresh WS owns the digits: the pair      */
+/* verdict is "Er" but exactly one probe keeps an accepted value.              */
+static uint8_t Temp_ErAltCondition(void) {
+	const temp_sample_t xdata *in;
+	const temp_sample_t xdata *ext;
+
+	if(temp_src != SENSOR_SRC_ALL || Link_WsFresh()) return 0;
+	in  = Temp_Pipeline_Get(TEMP_INTERNAL);
+	ext = Temp_Pipeline_Get(TEMP_EXTERNAL);
+	if(in->accepted_valid && ext->accepted_valid) return 0;
+	return (uint8_t)(in->accepted_valid || ext->accepted_valid);
+}
+
 void Temp_Draw(const temp_sample_t xdata *sample) {
+	const temp_sample_t xdata *in;
+	const temp_sample_t xdata *ext;
 	uint8_t ok;
 
 	/* WS override: while the wireless sensor is fresh it drives the relay, so  */
@@ -104,15 +128,57 @@ void Temp_Draw(const temp_sample_t xdata *sample) {
 	}
 	ok = sample->accepted_valid;
 	if(temp_src == SENSOR_SRC_ALL) {
-		ok = (uint8_t)(ok &&
-		     Temp_Pipeline_Get(TEMP_INTERNAL)->accepted_valid &&
-		     Temp_Pipeline_Get(TEMP_EXTERNAL)->accepted_valid);
+		in  = Temp_Pipeline_Get(TEMP_INTERNAL);
+		ext = Temp_Pipeline_Get(TEMP_EXTERNAL);
+		ok = (uint8_t)(ok && in->accepted_valid && ext->accepted_valid);
+		if(!ok) {
+			/* half-dead pair: while the alternation machine runs the        */
+			/* temperature phase shows the survivor's value; an idle/frozen  */
+			/* machine (power OFF, a mode or an adjust window owns the       */
+			/* screen, or the pair went fully dead) keeps the plain "Er".    */
+			if(er_alt_run && !er_alt_lit) {
+				Led_Temp(in->accepted_valid ? in->accepted_c100
+				                            : ext->accepted_c100);
+				return;
+			}
+			Led_TempErr();
+			return;
+		}
 	}
 	if(ok) Led_Temp(sample->accepted_c100);
 	else   Led_TempErr();
 }
 
-/********************************************************************************/
+/* 100 ms poll driving the AL "Er"/temperature alternation. Redraws only at    */
+/* phase transitions through Temp_Draw(); the machine stops (Temp_Draw keeps   */
+/* the plain "Er") while power is OFF, a mode owns the screen, an adjust       */
+/* window (Set / %RH) is up, the pair is healthy or a fresh WS owns the        */
+/* digits. On every restart the temperature phase comes first.                 */
+void Temp_ErPoll(void) {
+	uint16_t now;
+
+	if(!power_on || !Screen_ModeFree() || adj_remain ||
+	   !Temp_ErAltCondition()) {
+		er_alt_run = 0;
+		er_alt_lit = 0;
+		return;
+	}
+	now = BTN_Tick10ms();
+	if(!er_alt_run) {
+		er_alt_run = 1;
+		er_alt_lit = 0;
+		er_alt_deadline = (uint16_t)(now + TEMP_ER_TEMP_10MS_TICKS);
+		Temp_Draw(Temp_DisplaySample());   /* survivor value right away        */
+		return;
+	}
+	if((int16_t)(now - er_alt_deadline) < 0) return;
+	er_alt_lit = !er_alt_lit;
+	er_alt_deadline = (uint16_t)(now + (er_alt_lit ? TEMP_ER_WARN_10MS_TICKS
+	                                            : TEMP_ER_TEMP_10MS_TICKS));
+	Temp_Draw(Temp_DisplaySample());
+}
+
+/*******************************************************************************/
 void Clock_Draw(void) {
 	XDATA_TMP(uint8_t, h);
 	XDATA_TMP(uint8_t, m);

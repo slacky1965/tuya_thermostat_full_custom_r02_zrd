@@ -66,6 +66,7 @@ void Standby_KeysApply(void);           /* OFF phase 1: keys+leaf at MAX        
 void Standby_GreenApply(void);          /* steady OFF: leaf at day/night level  */
 const temp_sample_t xdata *Temp_DisplaySample(void);
 void Temp_Draw(const temp_sample_t xdata *sample);
+void Temp_ErPoll(void);
 void Clock_Draw(void);                  /* HH:MM + immediate flush              */
 extern uint8_t xdata off_hold;          /* OFF touch-key stay phase, seconds    */
 void Lock_Sym(void);                    /* SYM_LOCK follows keypadLockout       */
