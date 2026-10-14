@@ -207,7 +207,3 @@ end, remove power from MCU
 </details>
 
 Все. На этом можно термостат собирать обратно.
-
-## [Протокол обмена между ZT3L и CA51F253L3](serial.md)
-
-
