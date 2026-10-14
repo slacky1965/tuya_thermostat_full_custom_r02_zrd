@@ -14,7 +14,7 @@
 /* NOT mask interrupts. UART1 has a single-byte receive buffer (S1BUF) and    */
 /* NO overrun flag: an interrupt-mask window here delayed the RX ISR past one */
 /* byte time (~87 us at 115200) and the next byte silently overwrote S1BUF,   */
-/* dropping whole inbound frames (soak 2026-09-27: 100% of link losses were   */
+/* dropping whole inbound frames (soak runs: 100% of link losses were         */
 /* in the TLSR->CA direction). INDEX save/restore stays: it protects the      */
 /* main-loop INDEX users (led.c / buttons.c). If an ISR ever needs            */
 /* INDEX/MDUDAT, this invariant must be revisited together with a mask.       */

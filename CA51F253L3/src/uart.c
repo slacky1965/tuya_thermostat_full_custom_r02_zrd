@@ -1,7 +1,7 @@
 /* Define this TU as THE owner of the UART buffer bodies: uart.h emits the
    uart0/1/2 ring buffers and flags only when _UART_C_ is set, every other
    TU sees externs (this used to come from the file's include guard, which
-   was removed 2026-10-02 at the owner's request - the switch stays). */
+   was removed - the switch stays). */
 #define _UART_C_
 #include "include/stdint.h"
 #include "include/config.h"		

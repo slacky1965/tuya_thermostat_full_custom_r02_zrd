@@ -178,14 +178,14 @@ static uint8_t xdata link_factory_pending;
 /* Wireless climate sensor (WS) telemetry (declared here: Link_Tick1s ages      */
 /* ws_age before its early returns). Temperature/humidity arrive via h_ws();    */
 /* humidity has NO counter of its own - it rides on ws_age via Link_WsFresh.    */
-static int16_t  xdata ws_temp_c100;      /* last WS temperature, ZCL x100       */
-static uint16_t xdata ws_humid_c100;     /* last WS humidity,    ZCL x100       */
-static uint16_t xdata ws_age;            /* s since the first/last WS           */
-                                         /* TEMPERATURE frame; Link_Init boots  */
-                                         /* it STALE (>= WS_FRESH_SECS), so a   */
-                                         /* humidity-only frame can never open  */
-                                         /* the freshness window (bench bug     */
-                                         /* 2026-09-30). Humidity rides on it.  */
+static int16_t  xdata ws_temp_c100;      /* last WS temperature, ZCL x100        */
+static uint16_t xdata ws_humid_c100;     /* last WS humidity,    ZCL x100        */
+static uint16_t xdata ws_age;            /* s since the first/last WS            */
+                                         /* TEMPERATURE frame; Link_Init boots   */
+                                         /* it STALE (>= WS_FRESH_SECS), so a    */
+                                         /* humidity-only frame can never open   */
+                                         /* the freshness window. Humidity       */
+                                         /* rides on it.                         */
 
 static uint8_t lnk_txq_post(uint8_t cmd, uint8_t flags, uint8_t type, uint8_t len,
                             const uint8_t xdata *payload, uint16_t delay);
@@ -801,7 +801,7 @@ void Link_OnFrame(const uart_frame_t xdata *f) {
 	/* Everything else - including                                              */
 	/* TIME and the schedule days - is a mutating/late frame: NOT_READY. The    */
 	/* old `TIME/SCHED && flags == ACK` clause existed for their Req roles,     */
-	/* both removed as dead (TIME 2026-09-30, SCHED 2026-10-02). ALIVE always   */
+	/* both removed as dead. ALIVE always                                       */
 	/* answers OK: the TLSR counts ANY reply as proof of life, and an error     */
 	/* before the peer's own Info exchange would only add noise.                */
 	if(!link_peer_alive && cmd != LNK_CMD_INFO &&

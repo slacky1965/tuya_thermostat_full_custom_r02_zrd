@@ -22,7 +22,7 @@
 
 COMPILER ?= clang
 LTO ?= 1
-# LTO optimisation level for ld.lld (--lto-O<n>). MEASURED 2026-10-10:
+# LTO optimisation level for ld.lld (--lto-O<n>). MEASURED:
 # --lto-O1 (the first guess) costs 891 B; O2 == O3 == default (smallest),
 # O0 == O1. Compile stays -Oz: -Os overflows the flash by ~3.7 KB on this
 # backend. Keep the value overridable for size A/B.

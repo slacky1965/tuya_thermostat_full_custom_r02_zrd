@@ -27,7 +27,7 @@
 /* Bench-only touch helpers (BTN_AnyDown/BTN_Baseline) - they have no call
  * site at all, so they get their own switch instead of riding on BUTTONS_EN. */
 #define BTN_BENCH_EN    OFF
-/* Temporary bench trace (2026-09-29): while the padlock blink runs, every LED
+/* Temporary bench trace: while the padlock blink runs, every LED
  * register event prints one char on UART0 - brightness level '0'..'8',
  * backlight channel 'a0'..'a3' (on) / 'A0'..'A3' (off), buffer push '.',
  * buffer clear '=', blink start '!' / end '#'. Used to catch the writer of the

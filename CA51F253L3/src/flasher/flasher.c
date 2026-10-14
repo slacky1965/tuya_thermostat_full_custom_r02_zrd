@@ -105,7 +105,7 @@ static void hold_done(uint8_t t) {
 /* The flasher log is gated on FLASHER_EN ALONE: the flasher owns its own
    polled UART0 (log_init below) and does not use debug.c, so requiring
    UART_DEBUG as well would make the log unbuildable on SDCC builds whose
-   application no longer fits the extra debug code (bench 2026-10-10). */
+   application no longer fits the extra debug code. */
 #if FLASHER_EN
 static void log_init(void) {
 	uint16_t reload = (uint16_t)(0x10000UL - (FOSC / (115200UL * 32UL)));

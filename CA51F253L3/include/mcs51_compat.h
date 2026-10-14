@@ -24,9 +24,9 @@
 /* `bit` must lower to a PLAIN byte, never to address_space(6): clang -Oz
    miscompiles bit-space C variables whose value comes from a load - the load
    gets CSE'd across basic blocks and the store writes a stale ACC value
-   (bench 2026-10-10: pwr_arm_power = power_on always stored 0, so the power
+   (bench: pwr_arm_power = power_on always stored 0, so the power
    hold never fired; the same class could silently hit prev_power/ext_ok/
-   clock_colon). This is the mapping the owner's working clang copy uses.
+   clock_colon). This is the mapping used by the known-good clang reference build.
    SFR bits are unaffected: they come from clang's builtin __sbit, which is
    only used for volatile hardware registers (EA, CY, ...). */
 #define bit unsigned char

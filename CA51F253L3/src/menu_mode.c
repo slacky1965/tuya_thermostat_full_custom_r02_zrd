@@ -39,7 +39,7 @@ typedef struct {
 } menu_item_t;
 
 /* IN / OU / AL in the big digits: shared renderer in led.c (the letter table   */
-/* was duplicated here until 2026-10-02).                                       */
+/* used to be duplicated here).                                                 */
 
 /* Ranges share the ABS_/MIN_/MAX_/KEYPAD_/SENSOR_/LED_ constants with the      */
 /* ingress gate (settings_ranges_valid), so menu limits cannot drift from       */

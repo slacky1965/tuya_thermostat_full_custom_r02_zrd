@@ -52,8 +52,8 @@ void debug_putc(uint8_t c) {
 /* Every DEBUG(flag, ...) call site prints through these. That is what keeps a
    single debug flag inside the 802 B ROM debug budget: Digits are produced by
    subtracting power-of-ten places instead of / and %, so no __divsint or
-   __modsint gets linked in. The varargs formatter (ca_printf) was deleted
-   2026-09-28 - no call site used it and it cost ~1500 B.                     */
+   __modsint gets linked in. The varargs formatter (ca_printf) was deleted -
+   no call site used it and it cost ~1500 B.                                 */
 
 /* The linker pulls the WHOLE debug.rel object in once any symbol of it is
    referenced, so compiling the text/number primitives for a build that only
@@ -84,9 +84,9 @@ void debug_puts(const char code *s) {
    temperatures come from an NTC table capped at 6000 c100 (+/- calib),
    setpoints and limits are <= 4500, the WS sensor reports up to 12500 c100
    (100.00..125.00 degC) and the RTC day counter runs past 20000. The fifth
-   place (10000) was removed 2026-09-28 under ROM pressure in debug builds
-   and restored 2026-10-02 (audit M12): values >= 10000 used to print as
-   '0'+10 garbage. Only debug builds pay for it - UART_DEBUG=OFF links
+   place (10000) must not be dropped: values >= 10000 would print as
+   '0'+10 garbage (it was once removed under ROM pressure and had to come
+   back). Only debug builds pay for it - UART_DEBUG=OFF links
    nothing from this file. */
 static const uint16_t code debug_place[5] = { 10000, 1000, 100, 10, 1 };
 
@@ -155,7 +155,7 @@ void debug_kv(const char code *tag, int16_t v) {
    here - that machinery alone cost 148 B. The `digits == 2` pre-shift IS the
    right-alignment of %02X: the loop always prints the TOP nibbles, so a byte
    (0x0066) must be moved into the high position first or it comes out "00".
-   Do NOT drop it as dead code - bench 2026-09-28 (LINK_EN) showed exactly that
+   Do NOT drop it as dead code - a LINK_EN bench run showed exactly that
    regression: every dumped byte printed as 00 while the frame lengths were
    right.                                                                 */
 void debug_hex(uint16_t v, uint8_t digits) {
