@@ -2,6 +2,18 @@
 
 Все материалы по железу взяты вот [отсюда](https://blog.softdev.online/index.php?controller=post&action=view&id_post=54).
 
+### Данный проект подходит к термостатам.
+
+- С оригинальной прошивкой они определяются в **z2m** так
+	- "_TZE204_u9bfwha0"
+	- "_TZE204_aoclfnxz"
+	- "_TZE200_edl8pz1k"
+	- "_TZE204_edl8pz1k"
+- Внешний вид
+	- <img src="doc/images/model02.png"/>
+- Плата
+	- Смотри в разделе [Железо](#1-железо)
+	
 ## Содержание
 
 - [1. Железо](#1-железо)
@@ -196,6 +208,6 @@ end, remove power from MCU
 
 Все. На этом можно термостат собирать обратно.
 
-## [Протокол обмена между ZT3L и CA51F253L3](doc/getting_started.md)
+## [Протокол обмена между ZT3L и CA51F253L3](serial.md)
 
 
