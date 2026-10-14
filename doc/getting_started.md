@@ -10,7 +10,7 @@
 	- "_TZE200_edl8pz1k"
 	- "_TZE204_edl8pz1k"
 - Внешний вид
-	- <img src="doc/images/model02.png"/>
+	- <img src="images/model02.png"/>
 - Плата
 	- Смотри в разделе [Железо](#1-железо)
 	
