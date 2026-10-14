@@ -154,6 +154,12 @@
 /* (IN/OU/AL) and BOTH WS values count as invalid. Seconds.                       */
 #define WS_FRESH_SECS         300
 
+/* AL "Er" alternation: with one probe of the AL pair dead the big digits       */
+/* alternate between the survivor's temperature and "Er" so the working value   */
+/* stays visible. Phase lengths in 100 ms ticks (main-loop grid).               */
+#define TEMP_ER_TEMP_10MS_TICKS 500    /* temperature phase, 5.0 s              */
+#define TEMP_ER_WARN_10MS_TICKS 150    /* "Er" phase, 1.5 s                     */
+
 /*** 8. NTC external switch (schematic unverified) ************************************************/
 /* The stock dump toggled P4.3/P4.4 as sensor power. P4.3 is the relay, so the internal NTC is    */
 /* read without any switch (bench-confirmed). Whether the external NTC needs a switch is not      */
