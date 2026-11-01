@@ -43,6 +43,26 @@ CAFWBOOT_B64 = (
 )
 bootloader_data = base64.b64decode(CAFWBOOT_B64)
 
+# phase1: how long the activation magic keeps flowing while the bench
+# applies power or pulses RESET. The old 4 s window missed slow power
+# ramps (bulk capacitance plus back-feed through the adapter's TX line
+# hold the MCU above the POR threshold for a long time), so the window
+# is generous and reports its progress once per second.
+ACTIVATION_WINDOW_SECS = 15
+
+# phase2: attempts of the F2S handshake. Between two silent attempts the
+# activation magic is re-sent, which recovers an MCU that rebooted after
+# the phase1 ACK (a late power/RESET pulse on the bench kills the
+# session otherwise: past the ACK the tool sends no more magic).
+PHASE2_ATTEMPTS = 3
+PHASE2_WAIT_10MS = 700   # ~7 s per attempt, as measured on this target
+
+# a status frame (80 00 00) can be lost or arrive later than the wait on a
+# long transfer over hand-made wiring: every framed command gets a few
+# sends, with stale/duplicate ACKs drained before each one, so a single bad
+# frame neither aborts the session silently nor desynchronises the ACKs.
+ACK_RETRY_ATTEMPTS = 3
+
 
 class Chip:
     """Known CACHIP chip: chipid (2 bytes, from 0x2B area, offset 0x02..0x03),
@@ -230,18 +250,21 @@ def hexdump(data: bytes):
 
 
 def finish_session():
-    """Send session end cmd, close the port and remind about power.
-    Used both on normal exit and on mid-session errors (e.g. unknown chip),
-    so the MCU never stays stuck in ISP mode."""
-    print("sending session end cmd")
-    send_to_mcu(b"\x07")
-    data = read_from_mcu(3, 100)
-    if len(data) == 0:
-       print("no response from MCU, session end result unknown")
-    elif data.find(b"\x80\x00\x00") != -1:
-       print("got mcu success response")
-    else:
-       print("got mcu error response")
+    """End an ESTABLISHED ISP session, close the port and remind about
+    power. Used both on normal exit and on mid-session errors (e.g. unknown
+    chip), so the MCU never stays stuck in ISP mode. When phase1 never got
+    its ACK there is no session to end - the exchange is skipped, only the
+    port is closed."""
+    if session_established:
+        print("sending session end cmd")
+        send_to_mcu(b"\x07")
+        data = read_from_mcu(3, 100)
+        if len(data) == 0:
+           print("no response from MCU, session end result unknown")
+        elif data.find(b"\x80\x00\x00") != -1:
+           print("got mcu success response")
+        else:
+           print("got mcu error response")
     ispport.close()
     print("end, remove power from MCU")
 
@@ -301,6 +324,7 @@ if len(sys.argv) < 3:
     print_usage_and_exit(1)
     
 actionToDo=0
+upload_incomplete = False
 
 # extract the optional -ci <value> option from the command line; it can
 # appear anywhere after the action and is used as-is, without any checks
@@ -415,14 +439,41 @@ def open_port_with_retry(tries=6, delay=1.0):
 ispport = open_port_with_retry()
 ispport.reset_input_buffer()
 okay=False
+session_established = False
+
+def re_activate(timeout=2.0):
+    """Re-send the activation magic and wait for a fresh ACK.
+
+    The ROM only listens for magic right after a reset, and the bench may
+    pulse power/RESET after phase1 has already captured its ACK: the chip
+    then reboots deaf to framed commands and phase2 would see silence.
+    Returns True when the MCU ACKs again (it is listening once more)."""
+    for _ in range(20):
+        try:
+            ispport.write(b"\xC1\x83\x07")
+        except (serial.SerialTimeoutException, serial.SerialException):
+            return False
+        time.sleep(0.012)
+    accum = bytearray()
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if ispport.in_waiting:
+            accum.extend(ispport.read(ispport.in_waiting))
+            if accum.find(b"\xAA\x4F\x4B\x00") != -1:
+                return True
+        time.sleep(0.005)
+    return False
 
 # phase1
-# try ISP activation magic sequence for 4seconds (Vcc should be ON)
-print("trying ISP-mode activation, waiting 4 seconds (if power is already applied, pulse RESET pin 2 low->high !)")
+# try ISP activation magic sequence (Vcc should be ON)
+print("trying ISP-mode activation, waiting up to {0} seconds (if power is already applied, pulse RESET pin 2 low->high !)".format(ACTIVATION_WINDOW_SECS))
 writes_failed = 0
 accum = bytearray()   # ACK accumulator: the ROM may pad the ACK with a leading
                       # 0x00 (observed "00 AA 4F 4B"), so match inside the stream
-for i in range(400):
+start = time.time()
+deadline = start + ACTIVATION_WINDOW_SECS
+next_report = 1
+while time.time() < deadline:
     try:
         ispport.write(b"\xC1\x83\x07")
         writes_failed = 0
@@ -459,14 +510,22 @@ for i in range(400):
     if idx != -1:
         print("MCU accepted connection")
         okay=True
+        session_established = True
         # drain trailing bytes so phase2 starts clean
         time.sleep(0.02)
         ispport.reset_input_buffer()
         break
+    elapsed = int(time.time() - start)
+    if elapsed >= next_report:
+        print("still waiting for the MCU ({0}s of {1}s) - apply power or pulse RESET now".format(elapsed, ACTIVATION_WINDOW_SECS))
+        next_report = elapsed + 1
     time.sleep(0.01)
 
 if not okay:
    print("no connection, try again")
+   print("the MCU must BOOT while the magic flows: disconnect everything")
+   print("except GND, wait ~30 s, start the tool, then plug the power AND")
+   print("data wires together (or pulse RESET) and retry")
 
 # phase2
 if okay:
@@ -474,15 +533,17 @@ if okay:
    # The ROM answers "01 00" with the F2S frame (81 00 08 46 32 53) at
    # 1200 baud, but only after a multi-second delay (measured ~3.8s on
    # this target - the ROM seems to be bringing up the 115200 clock).
-   # The original code timed out after just 1s and treated the session
-   # as failed. Wait generously, accumulate bytes, and require the F2S
-   # signature before letting phase3 proceed (B-mode test proved that
-   # without a completed F2S exchange the ROM ignores "02" entirely).
+   # Require the F2S signature before letting phase3 proceed (B-mode
+   # test proved that without a completed F2S exchange the ROM ignores
+   # "02" entirely). On silence the activation magic is re-sent between
+   # attempts: a power/RESET pulse that landed after the phase1 ACK
+   # reboots the MCU, and a freshly booted ROM listens for magic only,
+   # not for framed commands.
    accumulator = bytearray()
    signature = b"\x81\x00\x08\x46\x32\x53"
-   for attempt in range(2):
+   for attempt in range(PHASE2_ATTEMPTS):
       send_to_mcu(b"\x01\x00")
-      for i in range(700):   # up to ~7s per attempt
+      for i in range(PHASE2_WAIT_10MS):   # up to ~7s per attempt
          if ispport.in_waiting:
             accumulator.extend(ispport.read(ispport.in_waiting))
             if accumulator.find(signature) != -1:
@@ -490,11 +551,22 @@ if okay:
          time.sleep(0.01)
       if accumulator.find(signature) != -1:
          break
+      if attempt + 1 < PHASE2_ATTEMPTS:
+         print("no F2S yet ({0} attempt(s) left), re-activating the MCU".format(PHASE2_ATTEMPTS - attempt - 1))
+         if re_activate():
+            print("MCU ACKed again, retrying the handshake")
+         else:
+            print("no ACK on re-activation either")
+         time.sleep(0.05)
    if accumulator.find(signature) != -1:
       print("got mcu success response")
       okay=True
    else:
       print("no F2S signature ({0})".format(bytes(accumulator).hex()[:64]))
+      okay=False
+      print("the chip must BOOT at full voltage while the magic flows:")
+      print("discharge the board (all wires except GND, ~30 s), then plug")
+      print("power AND data wires together - or pulse RESET - and retry")
 
 
 # phase3
@@ -542,19 +614,28 @@ if okay:
        byte_buffer.extend(b"\x80")
        # body
        byte_buffer.extend(chunk)
-       # send to mcu
-       send_to_mcu(byte_buffer)
-       # try read status
-       data = read_from_mcu(3, 100)
+       # a lost status frame must neither be skipped (a corrupted XRAM
+       # bootloader would reach phase5b) nor abort on the first try
+       data = bytearray()
+       for attempt in range(ACK_RETRY_ATTEMPTS):
+           if attempt:
+               print("\nno status for bootloader chunk at {0} (attempt {1}/{2}), retrying".format(offset, attempt + 1, ACK_RETRY_ATTEMPTS))
+           ispport.reset_input_buffer()
+           send_to_mcu(byte_buffer)
+           data = read_from_mcu(3, 100)
+           if data.find(b"\x80\x00\x00") != -1 or data.find(b"\x80\x01\x00") != -1:
+               break
        idx = data.find(b"\x80\x00\x00")
        if idx != -1:
           print("got mcu success response")
           okay=True
        else:
-          idx = data.find(b"\x80\x01\x00")
-          if idx != -1:
-             print("got mcu error response")
-             break
+          if data.find(b"\x80\x01\x00") != -1:
+             print("\ngot mcu error response for bootloader chunk at {0}".format(offset))
+          else:
+             print("\nno response from MCU for bootloader chunk at {0} after {1} attempts (buffer: {2})".format(offset, ACK_RETRY_ATTEMPTS, bytes(data).hex() or "<empty>"))
+          okay = False
+          break
 
 # phase5b
 # if no chipid was given on the command line, every flash action
@@ -727,10 +808,17 @@ if okay:
             byte_buffer.extend(b"\x80")
             # body
             byte_buffer.extend(chunk)
-            # send to mcu
-            send_to_mcu(byte_buffer)
-            # try read status
-            data = read_from_mcu(3, 100)
+            # a lost or slow status frame must not abort the transfer: drain
+            # stale/duplicate ACKs and resend the SAME frame a few times
+            data = bytearray()
+            for attempt in range(ACK_RETRY_ATTEMPTS):
+               if attempt:
+                  print("\nno status for offset {0} (attempt {1}/{2}), retrying".format(addrofwrite, attempt + 1, ACK_RETRY_ATTEMPTS))
+               ispport.reset_input_buffer()
+               send_to_mcu(byte_buffer)
+               data = read_from_mcu(3, 100)
+               if data.find(b"\x80\x00\x00") != -1 or data.find(b"\x80\x01\x00") != -1:
+                  break
             idx = data.find(b"\x80\x00\x00")
             if idx != -1:
                wrote = addrofwrite + len(chunk)
@@ -738,15 +826,21 @@ if okay:
                pct = int(wrote * 100 / filesize) if filesize else 100
                print("written {0}/{1} bytes ({2}%)".format(wrote, filesize, pct), end="\r")
             else:
-               idx = data.find(b"\x80\x01\x00")
-               if idx != -1:
-                  print("got mcu error response")
+               if data.find(b"\x80\x01\x00") != -1:
+                  print("\ngot mcu error response at offset {0}".format(addrofwrite))
+               else:
+                  print("\nno response from MCU at offset {0} after {1} attempts (buffer: {2})".format(addrofwrite, ACK_RETRY_ATTEMPTS, bytes(data).hex() or "<empty>"))
+               okay = False
+               upload_incomplete = True
                break
             byte_buffer.clear()
             addrofwrite += len(chunk)
          file.close()
          print()
-         print("upload done: {0} bytes written to onchip flash".format(addrofwrite))
+         if upload_incomplete:
+            print("upload INCOMPLETE: {0} of {1} bytes written to onchip flash".format(addrofwrite, filesize))
+         else:
+            print("upload done: {0} bytes written to onchip flash".format(addrofwrite))
    elif actionToDo == 3:
        print("requesting onchip flash memory read with size {0} to {1}".format(memsize, dumpname))
        file = open(dumpname, "wb")
@@ -840,3 +934,5 @@ if okay:
       print("dumped {0} bytes to 2bareadump.bin".format(len(chip_data)))
 # something like a finish session
 finish_session()
+if upload_incomplete:
+    sys.exit(1)
