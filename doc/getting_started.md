@@ -160,9 +160,9 @@ $ make flash-cachip
 Тут есть два варианта.
 
 1. Чип прошьется.
-2. Программа напишет, что она ожидает 4 секунды для сброса или подачи питания.
+2. Программа напишет, что она ожидает до 15 секунд для сброса или подачи питания.
 
-Если у нас второй вариант, то в эти 4 секунды мы подаем питание **3v3** (мы же помним, что его не подавали). В конце концов должно получиться следующее.
+Если у нас второй вариант, то в это окно мы подаем питание **3v3** (мы же помним, что его не подавали). В конце концов должно получиться следующее.
 
 <details>
 <summary>Пример вывода команды <b>make flash-cachip</b></summary>
@@ -173,7 +173,7 @@ make -C CA51F253L3 PORT=COM4 flash-cachip
 py ./tools/cachip-isp-serial_new.py COM4 upload ../bin/osrctherm_r02_v1.01_CA51F253L3.bin
 using embedded phase1 bootloader (642 bytes)
 opening serial port COM4
-trying ISP-mode activation, waiting 4 seconds (if power is already applied, pulse RESET pin 2 low->high !)
+trying ISP-mode activation, waiting up to 15 seconds (if power is already applied, pulse RESET pin 2 low->high !)
 MCU accepted connection
 sending some magic cmd
 got mcu success response
