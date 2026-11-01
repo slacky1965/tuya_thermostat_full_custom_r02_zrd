@@ -21,15 +21,23 @@
 #define data
 #define idata
 #define pdata
-/* `bit` must lower to a PLAIN byte, never to address_space(6): clang -Oz
-   miscompiles bit-space C variables whose value comes from a load - the load
-   gets CSE'd across basic blocks and the store writes a stale ACC value
-   (bench: pwr_arm_power = power_on always stored 0, so the power
-   hold never fired; the same class could silently hit prev_power/ext_ok/
-   clock_colon). This is the mapping used by the known-good clang reference build.
-   SFR bits are unaffected: they come from clang's builtin __sbit, which is
-   only used for volatile hardware registers (EA, CY, ...). */
-#define bit unsigned char
+/* `bit` maps to REAL bit space: storage in .mcs51_bit* (IRAM 0x20..0x2F),
+   `x = !x` -> CPL, `x = 1`/`x = 0` -> SETB/CLR, load/store -> MOV C,bit /
+   MOV bit,C - i.e. the SDCC `__bit` semantics. This needs the healed
+   mcs51-llvm build (bdf4fc0): earlier builds CSE'd a bit-space load and
+   stored a stale ACC value (the power hold never fired) and omitted CPL
+   on inversion.
+   REMAINING LIMITATION of the healed build: a value-select whose operands
+   are two DIFFERENT bit-space loads crashes the backend ("Cannot select:
+   SELECT_CMP16") - never write `dst = cond ? bit_a : bit_b;` and never
+   merge two different bit variables in the branches of one if/else.
+   Single-source selects (`cond ? bit : 1`, `bit ? 1 : 2`), binary ops and
+   constant selects are fine; doc_local/temp/test_bit_codegen.py audits
+   the sources and locks the codegen contract.
+   clang rejects address-space-qualified AUTOMATICS: local flags stay
+   bytes (see `ea` in main.c). SFR bits come from clang's builtin __sbit
+   (volatile hardware registers) and are unaffected by this macro. */
+#define bit unsigned char __attribute__((address_space(6)))
 #define __interrupt(n) __attribute__((interrupt(n)))
 #endif
 
