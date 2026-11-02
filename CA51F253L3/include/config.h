@@ -32,7 +32,7 @@
 /* Model string is sent without a terminator; keep it <= 16 chars so the                          */
 /* Info frame stays within LNK_INFO_MAX_LEN (see link_proto.h).                                   */
 #define DEVICE_MODEL        "osrctherm_r02" /* name, revision suffix _rNN                         */
-#define APP_VERSION         0x101           /* firmware version, BCD u16 BE                       */
+#define APP_VERSION         0x102           /* firmware version, BCD u16 BE                       */
                                             /* (hi byte = major, lo byte = minor; 0x100 = v1.00)  */
 #define CHIP_ID             0x20A0          /* hardware chip ID (u16 BE), CACHIP                  */
                                             /* 0x20A0 = CA51F253L3; exact ID in flash 0x2B area   */
@@ -160,13 +160,15 @@
 #define TEMP_ER_TEMP_10MS_TICKS 500    /* temperature phase, 5.0 s              */
 #define TEMP_ER_WARN_10MS_TICKS 150    /* "Er" phase, 1.5 s                     */
 
-/*** 8. NTC external switch (schematic unverified) ************************************************/
-/* The stock dump toggled P4.3/P4.4 as sensor power. P4.3 is the relay, so the internal NTC is    */
-/* read without any switch (bench-confirmed). Whether the external NTC needs a switch is not      */
-/* confirmed yet; if it turns out unnecessary, drop NTC_EXT_SW_PIN and temp_power().              */
-#define NTC_EXT_SW_PIN      P44
-#define NTC_EXT_SW_ON       1
-#define NTC_EXT_SW_OFF      0
+/*** 8. P4.4 / J2-5: optional second-relay line (NOT an NTC switch) ***********   */
+/* Chip pin 17 (P4.4) routes to J2-5: the power board's OPTION line for a SECOND  */
+/* relay (that relay position is unpopulated on variants without it; the same     */
+/* J2-5 topology is documented for the sibling board in r01's                     */
+/* doc_local/hardware_002_WF1.md). This board has NO external-NTC power switch -  */
+/* both NTCs are plain ADC inputs - so Temp_Init() parks P44F in HIGH_Z and the   */
+/* output latch is never written: a driven line would pulse the option relay once */
+/* per second (one external-probe measurement per second, in both power states).  */
+/* Stock's SETB/CLR of P4.4 belonged to its own hardware variant.                 */
 
 /*** 9. Optional code switches (ROM size) ***********************************************************/
 /* The linker does no dead-code elimination, so helpers that nothing calls still occupy ROM.        */

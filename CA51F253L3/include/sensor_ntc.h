@@ -29,7 +29,7 @@
 
 #define TEMP_ERR       0x7FFF        /* sentinel: code outside the table */
 
-void     Temp_Init(void);               /* P43F/P44F=2 GPIO out, both off, ADC config */
+void     Temp_Init(void);               /* P44F=HIGH_Z (J2-5 option line), ADC config */
 uint8_t Temp_ReadC100Checked(uint8_t sensor, int16_t xdata *value_c100);
 int16_t  Temp_ReadC100(uint8_t sensor); /* 0.01 deg C (ZCL int16s), or TEMP_ERR       */
 
