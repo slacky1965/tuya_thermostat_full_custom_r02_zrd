@@ -58,15 +58,6 @@ static void temp_select(uint8_t sensor) {
 	ADCFGL = (ADCFGL & 0xF0) | ADCHS((sensor == TEMP_INTERNAL) ? ADC_CH0 : ADC_CH1);
 }
 
-static void temp_power(uint8_t sensor, uint8_t on) {
-	/* P4.3 is the heating relay (config.h section 7), NOT a sensor power
-	   switch: do NOT drive it here (that would pulse the relay every
-	   measurement). The internal NTC is a plain ADC input (P4.0), always on. */
-	if(sensor == TEMP_EXTERNAL) {
-		NTC_EXT_SW_PIN = on ? NTC_EXT_SW_ON : NTC_EXT_SW_OFF;   /* unverified */
-	}
-}
-
 static uint16_t temp_adc_value;
 
 static uint8_t temp_conv_once(void) {
@@ -88,9 +79,10 @@ static uint8_t temp_conv_once(void) {
 void Temp_Init(void) {
 	P40F = P40_ADC0_SETTING;             /* CH0 analog input  (internal NTC)   */
 	P41F = P41_ADC1_SETTING;             /* CH1 analog input  (external NTC)   */
-	P44F = OUTPUT;                       /* P4.4 = external NTC switch (cfg 8) */
-	temp_power(TEMP_INTERNAL, 0);
-	temp_power(TEMP_EXTERNAL, 0);
+	/* pin 17 / J2-5 = power board's optional 2nd-relay line: park it in
+	   high-Z and never drive it (one pulse per measurement would click
+	   the relay once per second on boards where it is populated)       */
+	P44F = HIGH_Z;
 	/* NOTE: the heating relay (P4.3) is initialised by Relay_Init() (relay.c). */
 
 	ADCON   = AST(0) | ADIE(0) | HTME(7) | VSEL(ADC_REF_VDD);
@@ -109,7 +101,6 @@ static uint8_t temp_read_raw_checked(uint8_t sensor, uint16_t xdata *raw) {
 	max1 = max2 = 0;
 	*raw = 0;
 	temp_select(sensor);
-	temp_power(sensor, 1);
 	Delay_ms(2);
 	ok = 1;
 	for(i = 0; i < TEMP_AVG + 1; i++) {
@@ -125,7 +116,6 @@ static uint8_t temp_read_raw_checked(uint8_t sensor, uint16_t xdata *raw) {
 		if(v > max1)      { max2 = max1; max1 = v; }
 		else if(v > max2) { max2 = v; }
 	}
-	temp_power(sensor, 0);
 	if(!ok) return 0;
 	acc -= (uint16_t)(min1 + min2 + max1 + max2);
 	*raw = acc / (TEMP_AVG - 2 * TEMP_TRIM);
