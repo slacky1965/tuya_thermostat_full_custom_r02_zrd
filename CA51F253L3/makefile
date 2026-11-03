@@ -94,6 +94,8 @@ FLASHER_IHX   := $(BUILD)/flasher.ihx
 FLASHER_BLOB  := $(BUILD)/flasher_blob.c
 FLASHER_FLAGS := -mmcs51 --model-small --opt-code-size --iram-size 256 --xram-size 0x01F0 \
                  --code-loc 0x8000 --code-size 2048 --xram-loc 0x0600 -I. -Iinclude
+                 
+DEBUG ?= ON
 
 OUT := $(BUILD)/$(PROJ)
 COMMON_BIN := ../bin
@@ -126,6 +128,8 @@ CLANG_FLAGS := --target=mcs51 -Oz -Wall -Wno-gcc-compat -Wno-unknown-pragmas \
 ifeq ($(LTO),1)
 CLANG_FLAGS += -flto
 endif
+
+CLANG_FLAGS += -DUART_DEBUG=$(DEBUG)
 
 LD_SCRIPTS := ld/ca51f253l3.ld $(GEN_DIR)/sfr_symbols.ld
 RUNTIME_LIB ?= $(LLVM_MCS51)/libmcs51builtins.a
@@ -197,6 +201,7 @@ else ifeq ($(COMPILER),sdcc)
 
 # --- legacy SDCC path (unchanged behavior) -----------------------------------
 SDCCFLAGS := -mmcs51 --model-large --opt-code-size --iram-size 256 --xram-size 2048 --code-size $(FLASH_CODE_SIZE) -I. -Iinclude -I.. -I../include_common
+SDCCFLAGS += -DUART_DEBUG=$(DEBUG)
 
 RELS  := $(patsubst src/%.c,$(BUILD)/%.rel,$(SRCS)) $(BUILD)/flasher_blob.rel
 

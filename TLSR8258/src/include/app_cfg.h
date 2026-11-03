@@ -63,7 +63,9 @@ extern "C" {
 #include "version_cfg.h"
 
 /* Debug mode config */
+#ifndef UART_PRINTF_MODE
 #define	UART_PRINTF_MODE                ON
+#endif
 #define USB_PRINTF_MODE         		OFF
 
 #define DEBUG_PKT_EN                    ON      /* link frame hex dump (app_uart.c) */

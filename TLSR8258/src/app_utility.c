@@ -8,14 +8,16 @@ uint32_t mcuBootAddrGet(void);
 
 void start_message() {
 
+#if UART_PRINTF_MODE
 #ifdef ZCL_OTA
-        APP_DEBUG(DEBUG_OTA_EN, "OTA mode enabled. MCU boot from address: 0x%x\r\n", BOOT_LOADER_MODE?0x8000:mcuBootAddrGet());
+    APP_DEBUG(DEBUG_OTA_EN, "OTA mode enabled. MCU boot from address: 0x%x\r\n", BOOT_LOADER_MODE?0x8000:mcuBootAddrGet());
 #else
     APP_DEBUG(DEBUG_OTA_EN, "OTA mode desabled. MCU boot from address: 0x%x\r\n", BOOT_LOADER_MODE?0x8000:mcuBootAddrGet());
 #endif
 
     const uint8_t version[] = ZCL_BASIC_SW_BUILD_ID;
     APP_DEBUG(DEBUG_ZB_CB_EN, "Firmware version: %s\r\n", version+1);
+#endif
 }
 
 

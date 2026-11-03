@@ -256,7 +256,7 @@ static void app_zclDfltRspCmd(uint16_t clusterId, zclDefaultRspCmd_t *pDftRspCmd
  */
 static void app_zclCfgReportCmd(uint8_t endPoint, uint16_t clusterId, zclCfgReportCmd_t *pCfgReportCmd)
 {
-    printf("app_zclCfgReportCmd\r\n");
+    APP_DEBUG(DEBUG_ZCL_CB_EN, "app_zclCfgReportCmd\r\n");
 //    reportCfgInfo_t *pEntry;
 //    for(uint8_t i = 0; i < pCfgReportCmd->numAttr; i++) {
 //        for (uint8_t ii = 0; ii < ZCL_REPORTING_TABLE_NUM; ii++) {
@@ -291,7 +291,7 @@ static void app_zclCfgReportCmd(uint8_t endPoint, uint16_t clusterId, zclCfgRepo
  */
 static void app_zclCfgReportRspCmd(uint16_t clusterId, zclCfgReportRspCmd_t *pCfgReportRspCmd)
 {
-    printf("app_zclCfgReportRspCmd\r\n");
+    APP_DEBUG(DEBUG_ZCL_CB_EN, "app_zclCfgReportRspCmd\r\n");
 
 }
 
