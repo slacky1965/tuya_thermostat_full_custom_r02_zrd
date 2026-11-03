@@ -21,7 +21,7 @@
 #define TEMP_EN         OFF
 #define RTC_EN          OFF
 #define LINK_EN         OFF                 /* ZT3L link: raw RX/TX packet dump    */
-#define LED_SCAN_EN     OFF                /* bench: run Led_CellScan at startup  */
+#define LED_SCAN_EN     OFF                 /* bench: run Led_CellScan at startup  */
 #define FLASH_EN        OFF
 #define FLASHER_EN      OFF                /* flasher log during OTA (UART0, P3.0/P3.1) */
 #define SETTINGS_EN     OFF

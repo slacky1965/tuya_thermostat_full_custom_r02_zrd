@@ -36,8 +36,10 @@ void Sched_Set_Next(void);
 void Sched_SendPending(void);
 void Sched_Set_Exit(void);
 uint8_t Sched_EntryValid(const schedule_t xdata *e);
-int16_t Sched_ActiveSetpoint(void);   /* setpoint in force right now     */
-extern int16_t xdata target_setpoint; /* control/display setpoint mirror */
+int16_t Sched_ActiveSetpoint(void);   /* setpoint in force right now                               */
+void Sched_SlotApply(void);           /* SYM_SP1..6: period that owns "now" (screen.c)             */
+extern int16_t xdata target_setpoint; /* control/display setpoint mirror                           */
+extern uint8_t xdata sched_slot_now;  /* 1-based active slot, 0=none (set by Sched_ActiveSetpoint) */
 
 /* ---- settings menu (src/menu_mode.c) ---- */
 #define MENU_OFF        0

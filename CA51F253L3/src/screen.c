@@ -278,6 +278,29 @@ uint8_t Screen_ModeFree(void) {
 	                 menu_set == MENU_OFF);
 }
 
+/* Light the schedule-slot house of the transition that owns "now". The index    */
+/* comes from Sched_ActiveSetpoint's single walk of the day rows (it refreshes   */
+/* sched_slot_now as a side effect and shares the greatest-minute criterion      */
+/* with CONTROL, so the lit house is always the slot feeding the relay - a       */
+/* self-contained second copy of the walk cost +346 B clang / +310 B SDCC and    */
+/* overflowed the SDCC ROM). Encoding: 1-based, 0 = none, which survives         */
+/* xdata_clear(). All six houses are off in MANUAL mode and before the day's     */
+/* first transition. The schedule editor draws its own blinking slot.            */
+void Sched_SlotApply(void) {
+	uint8_t i;
+
+	for(i = 0; i < LNK_SCHED_N; i++) {
+		Led_SymSet((uint8_t)(SYM_SP1 + i), 0);
+	}
+	if(!(settings.progMode & PROG_MODE_SCHEDULE)) {
+		return;
+	}
+	(void)Sched_ActiveSetpoint();      /* refresh the cached index for this paint */
+	if(sched_slot_now) {
+		Led_SymSet((uint8_t)(SYM_SP1 + sched_slot_now - 1), 1);
+	}
+}
+
 void Thermo_Apply(void) {
 	const temp_sample_t xdata *sample = Temp_DisplaySample();
 
@@ -294,8 +317,9 @@ void Thermo_Apply(void) {
 		Lock_Sym();
 		Led_SymSet(SYM_NET,  net_steady);  /* steady when joined the network */
 		ProgMode_Icons(settings.progMode);
-		Led_Weekday(RTC_GetWeek());      /* light the current day-of-week */
-		clock_colon = 1;                 /* ':' starts lit                */
+		Sched_SlotApply();               /* current schedule-slot house (PROG)    */
+		Led_Weekday(RTC_GetWeek());      /* light the current day-of-week         */
+		clock_colon = 1;                 /* ':' starts lit                        */
 		Clock_Draw();
 		Temp_Draw(sample);
 	}

@@ -247,6 +247,7 @@ int16_t Sched_ActiveSetpoint(void) {
 	uint8_t  i;
 
 	if(settings.progMode & PROG_MODE_SCHEDULE) {
+		sched_slot_now = 0;             /* 0 = no transition owns "now" yet      */
 		RTC_ReadTime(&h, &m, 0, &w);
 		now = (uint16_t)h * 60 + m;
 		day = Sched_Day(w);
@@ -257,6 +258,7 @@ int16_t Sched_ActiveSetpoint(void) {
 				best  = day[i].minute;
 				t     = day[i].temperature;
 				found = 1;
+				sched_slot_now = (uint8_t)(i + 1);   /* 1-based, feeds the display */
 			}
 		}
 	}
@@ -287,3 +289,8 @@ int16_t Sched_ActiveSetpoint(void) {
 /* SCHEDULE -> the running weekly-schedule transition (see Sched_ActiveSetpoint). */
 /* xdata initialiser dropped: xdata_clear() zeroes it, the 1 s tick recomputes.   */
 int16_t xdata target_setpoint /* = OCCUPIED_HEATSETPOINT_DEF */;
+
+/* 1-based index of the transition Sched_ActiveSetpoint just matched (0 = none).  */
+/* 1-based so xdata_clear() reads as "none". Published from that function's walk  */
+/* (single copy of the day-row loop - the display draws from this cache).         */
+uint8_t xdata sched_slot_now;

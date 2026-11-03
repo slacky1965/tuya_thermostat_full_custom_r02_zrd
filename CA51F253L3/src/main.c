@@ -1006,6 +1006,7 @@ if(!Ota_IsPending()) Temp_ErPoll();
 				else {
 					Led_Weekday(RTC_GetWeek());     /* keep day-of-week in sync     */
 					Lock_Sym();                     /* remote lock                  */
+					Sched_SlotApply();              /* schedule-slot house of "now" */
 					Clock_Draw();
 					if (!adj_remain) {
 						Led_SymSet(SYM_HOME, ON);   /* house-with-thermometer on    */
