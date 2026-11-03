@@ -1061,6 +1061,22 @@ uint8_t Link_SendSchedule(uint8_t day) {
 	             UART_F_ACK | UART_F_CMD, LNK_T_RAW,
 	             LNK_SCHED_DAY_LEN, link_tx, 0);
 }
+#if UART_DEBUG
+/*********************************************************************************/
+/* Debug log line to the peer as a fire-and-forget Report: no ACK, no retries,   */
+/* no reply expected (Flags = 0x00 - a CMD without ACK is illegal on this link,  */
+/* and Reports are answered by nobody). The frame layer copies the payload into  */
+/* its TX frame immediately, so `line` only has to outlive this call. Dropped    */
+/* while the OTA raw protocol owns the wire. Compiled only with UART_DEBUG:      */
+/* without it nothing can ever call this (SDCC has no dead-code elimination).    */
+/*********************************************************************************/
+void Link_SendLog(const uint8_t xdata *line, uint8_t len) {
+	if(len == 0 || len > UART_FRAME_PAYLOAD) return;
+	if(Ota_IsPending()) return;
+	Uart1_SendFrame(lnk_next_seq(), 0x00, 0, LNK_CMD_DEBUG_LOG,
+	                LNK_T_RAW, len, line);
+}
+#endif /* UART_DEBUG */
 /********************************************************************************/
 /* Build and send one state-dump frame (step 0..LNK_DUMP_N-1) as a report.      */
 /* SDCC 4.6 has no #pragma enable_warning, so this disable lasts to the end of  */

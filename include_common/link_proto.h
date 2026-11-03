@@ -10,7 +10,7 @@
 /* hundredths of deg C (x100, matching ZCL); calibration and dead band are in    */
 /* tenths (x10, ZCL 0.1 C); humidity is u16 x100 (0..10000). ID ranges:          */
 /* 0x00-0x1F data/state, 0x20-0x26 weekly schedule (one frame per day),          */
-/* 0x27-0x28 actions, 0xC0-0xDF OTA (reserved), 0xE0-0xFF spare.                 */
+/* 0x27-0x28 actions, 0xC0-0xDF OTA (reserved), 0xE0 debug log, 0xE1-0xFF spare. */
 /*                                                                               */
 /* Frame CRC (CRC-8/MAXIM) is validated by the parser: frames with a bad CRC     */
 /* are dropped there and never reach the dispatcher, so handlers do not re-      */
@@ -75,11 +75,13 @@
 #define LNK_CMD_SCHED_SUN        0x26   /* RAW(24), Sunday                       */
 #define LNK_CMD_ALIVE            0x2B   /* Req (ACK, DLC 0): liveness probe, OK  */
 
-#define LNK_CMD_CA51F2_BOOT      0x2A   /* Cmd: display MCU (re)started, asks    */
-                                        /*   the peer to run a fresh Info        */
-#define LNK_CMD_FACTORY_RESET    0x27   /* action: restore defaults              */
-#define LNK_CMD_STATE_ALL        0x28   /* action: report the whole state        */
-#define LNK_CMD_OTA_START        0xC0   /* RAW(6): bin_size u32 BE + ver u16 BE  */
+#define LNK_CMD_CA51F2_BOOT      0x2A   /* Cmd: display MCU (re)started, asks     */
+                                        /*   the peer to run a fresh Info         */
+#define LNK_CMD_FACTORY_RESET    0x27   /* action: restore defaults               */
+#define LNK_CMD_STATE_ALL        0x28   /* action: report the whole state         */
+#define LNK_CMD_OTA_START        0xC0   /* RAW(6): bin_size u32 BE + ver u16 BE   */
+#define LNK_CMD_DEBUG_LOG        0xE0   /* Report, RAW(1..64): CA51F2 debug log   */
+                                        /*   line, fire-and-forget (no reply)     */
 
 /*** Raw OTA block protocol (link framing bypassed after OTA_START) **********  */
 /* Block: SYNC OFF_HI OFF_LO LEN DATA[LEN] CRC8; CRC-8/MAXIM (reflected 0x8C)   */
@@ -101,7 +103,7 @@
 #error OTA flasher byte timeout must be shorter than TLSR ACK timeout
 #endif
 
-/* Reserved: spare 0xE0-0xFF (serial.md).                                     */
+/* Reserved: spare 0xE1-0xFF; 0xE0 = LNK_CMD_DEBUG_LOG (serial.md).           */
 
 /*** Status codes (ONLY in replies: 0x00 = OK, != 0 = error) *****************   */
 /* High nibble = class: 0x1x frame/protocol, 0x2x value, 0x3x state, 0x4x        */

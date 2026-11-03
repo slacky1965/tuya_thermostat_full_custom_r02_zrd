@@ -80,6 +80,8 @@ uint8_t Link_SendI16(uint8_t cmd, int16_t v);
 uint8_t Link_SendU8(uint8_t cmd, uint8_t type, uint8_t v);
 /* Send one weekday's schedule (day 0..6 = Mon..Sun) reliably.                 */
 uint8_t Link_SendSchedule(uint8_t day);
+
+void Link_SendLog(const uint8_t xdata *line, uint8_t len);   /* debug line, no reply */
 void Link_RetryPending(void);
 
 #endif

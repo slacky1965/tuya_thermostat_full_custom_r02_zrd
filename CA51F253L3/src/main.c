@@ -383,7 +383,8 @@ void main(void) {
 
 		WDFLG = 0xA5;
 		BTN_Scan();
-Uart1_Poll();                  /* decode any pending link frames */
+Uart1_Poll();                  /* decode any pending link frames        */
+Debug_Poll();                  /* ship one pending debug line (shallow) */
 if(!Ota_IsPending()) Link_Poll();
 if(!Ota_IsPending()) Temp_ErPoll();
 		Ota_Poll();                    /* OTA handoff to the XRAM flasher */

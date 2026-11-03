@@ -42,6 +42,7 @@ void debug_temp(int16_t in_live, int16_t in_acc, int16_t ext_live, int16_t ext_a
 /* Low-level UART0 debug output (polled TX, P3.0/P3.1, Timer2 baudrate). */
 
     void debug_init(void);
+    void Debug_Poll(void);                      /* ship the pending log line - main loop  */
     void debug_putc(uint8_t c);
     /* fixed-format primitives used by every DEBUG(flag, ...) call site        */
     void debug_puts(const char code *s);
@@ -142,6 +143,7 @@ void debug_temp(int16_t in_live, int16_t in_acc, int16_t ext_live, int16_t ext_a
 
 #else
     #define debug_init(...)
+    #define Debug_Poll(...)
     #define DEBUG(flag, ...)
 #endif
 
