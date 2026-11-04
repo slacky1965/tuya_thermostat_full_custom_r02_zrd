@@ -68,7 +68,7 @@ extern "C" {
 #endif
 #define USB_PRINTF_MODE         		OFF
 
-#define DEBUG_PKT_EN                    ON      /* link frame hex dump (app_uart.c) */
+#define DEBUG_PKT_EN                    OFF      /* link frame hex dump (app_uart.c) */
 #define DEBUG_CMD_EN                    OFF
 #define DEBUG_TIME_EN                   OFF
 #define DEBUG_SAVE_EN                   OFF
