@@ -878,7 +878,7 @@ ZT3L, сторона приёма (`app_link.c`, `LNK_CMD_DEBUG_LOG`):
   перезагрузками на старте) — для трассировки линка оставьте UART0/J1.
 - Стоимость при `UART_DEBUG=ON`: два 48-байтовых буфера (~96 Б XRAM) плюс
   код буферизации; при `UART_DEBUG=OFF` — 0 (clang gc-sections выбрасывает
-  и `Link_SendLog`, у SDCC функция закрыта `#if UART_DEBUG`).
+  и `Link_SendLog`; сама функция также закрыта `#if UART_DEBUG`).
 
 ## OTA CA51F2 через Zigbee (реализовано)
 

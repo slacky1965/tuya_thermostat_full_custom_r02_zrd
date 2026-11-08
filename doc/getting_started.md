@@ -51,13 +51,12 @@
 | Инструмент | Обязательность |
 | --- | --- |
 | [clang](https://github.com/devbis/llvm-mcs51/releases) | обязательно |
-| [SDCC](https://sdcc.sourceforge.net/snap.php) | опционально, по умолчанию сборка для **CA51F253L3** сделана на clang |
 | [Telink IoT Studio](https://doc.telink-semi.cn/tools/telink_iot_studio/TelinkIoTStudio_V2025.2.zip) | обязательно |
 | [Git for Windows](https://git-scm.com/install/windows?ref=faun) | рекомендуется |
 
 В системе должен быть инсталлирован **python**.
 
-Если нужно только прошить **CA51F253L3**, то **SDCC** и **Telink IoT Studio** можно не скачивать.
+Если нужно только прошить **CA51F253L3**, то **Telink IoT Studio** можно не скачивать.
 
 ### Сборка
 
