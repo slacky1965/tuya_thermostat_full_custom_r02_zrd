@@ -497,6 +497,7 @@ void Led_BootTest(void) {
 		/* here so a request arriving during the test is not deferred to the    */
 		/* end of it (TX queue stays untouched - see below).                    */
 		Uart1_Poll();
+		Debug_Poll();                  /* and ship the pending log line too    */
 	}
 
 	/* Phase 2: dark screen, only the version in the big digits.              */
@@ -516,6 +517,7 @@ void Led_BootTest(void) {
 		WDFLG = 0xA5;
 		Delay_ms(100);
 		Uart1_Poll();                        /* same servicing in the 2 s phase  */
+		Debug_Poll();
 	}
 
 	/* clean up: clear shadow buffer + display, stop the display clock; the  */

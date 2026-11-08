@@ -63,10 +63,12 @@ extern "C" {
 #include "version_cfg.h"
 
 /* Debug mode config */
+#ifndef UART_PRINTF_MODE
 #define	UART_PRINTF_MODE                ON
+#endif
 #define USB_PRINTF_MODE         		OFF
 
-#define DEBUG_PKT_EN                    ON      /* link frame hex dump (app_uart.c) */
+#define DEBUG_PKT_EN                    OFF      /* link frame hex dump (app_uart.c) */
 #define DEBUG_CMD_EN                    OFF
 #define DEBUG_TIME_EN                   OFF
 #define DEBUG_SAVE_EN                   OFF
@@ -78,7 +80,8 @@ extern "C" {
 #define DEBUG_WS_EN                     ON      /* wireless climate sensor reports */
 #define DEBUG_ZCL_CB_EN                 ON
 #define DEBUG_ZB_CB_EN                  ON
-#define DEBUG_ALIVE_EN                  ON      /* alive-watchdog UART reinit  */
+#define DEBUG_ALIVE_EN                  ON      /* alive-watchdog UART reinit                 */
+#define DEBUG_LINKLOG_EN                ON      /* CA51F2 debug log, LNK_CMD_DEBUG_LOG (0xE0) */
 
 /* HCI interface */
 #define ZBHCI_UART                      OFF

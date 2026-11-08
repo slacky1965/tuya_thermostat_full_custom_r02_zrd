@@ -11,18 +11,20 @@
 #define ON              1
 #define OFF             0
 
-#define UART_DEBUG      OFF                /* effective ROM cap for A/B settings    */
+#ifndef UART_DEBUG
+#define UART_DEBUG      ON                /* effective ROM cap for A/B settings    */
+#endif
 
 #define BUTTONS_EN      ON
 #define LED_EN          OFF
 #define RAW_EN          OFF
 #define TEMP_EN         OFF
 #define RTC_EN          OFF
-#define LINK_EN         ON                 /* ZT3L link: raw RX/TX packet dump    */
-#define LED_SCAN_EN     OFF                /* bench: run Led_CellScan at startup  */
-#define FLASH_EN        ON
+#define LINK_EN         OFF                 /* ZT3L link: raw RX/TX packet dump    */
+#define LED_SCAN_EN     OFF                 /* bench: run Led_CellScan at startup  */
+#define FLASH_EN        OFF
 #define FLASHER_EN      OFF                /* flasher log during OTA (UART0, P3.0/P3.1) */
-#define SETTINGS_EN     ON
+#define SETTINGS_EN     OFF
 #define TIMER_EN        OFF
 /* Bench-only touch helpers (BTN_AnyDown/BTN_Baseline) - they have no call
  * site at all, so they get their own switch instead of riding on BUTTONS_EN. */
@@ -42,6 +44,7 @@ void debug_temp(int16_t in_live, int16_t in_acc, int16_t ext_live, int16_t ext_a
 /* Low-level UART0 debug output (polled TX, P3.0/P3.1, Timer2 baudrate). */
 
     void debug_init(void);
+    void Debug_Poll(void);                      /* ship the pending log line - main loop  */
     void debug_putc(uint8_t c);
     /* fixed-format primitives used by every DEBUG(flag, ...) call site        */
     void debug_puts(const char code *s);
@@ -142,6 +145,7 @@ void debug_temp(int16_t in_live, int16_t in_acc, int16_t ext_live, int16_t ext_a
 
 #else
     #define debug_init(...)
+    #define Debug_Poll(...)
     #define DEBUG(flag, ...)
 #endif
 

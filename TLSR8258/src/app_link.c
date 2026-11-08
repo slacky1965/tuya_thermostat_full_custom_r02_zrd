@@ -659,6 +659,19 @@ static uint8_t app_link_apply(const uart_frame_t *f) {
 			}
 		}
 		break;
+	case LNK_CMD_DEBUG_LOG: {
+			/* Fire-and-forget debug line from the CA51F2 (Report, no reply):    */
+			/* raw text bytes, not NUL-terminated on the wire - copy and         */
+			/* terminate here. Printed as-is (the line keeps its \r\n).          */
+			char logbuf[UART_FRAME_PAYLOAD + 1];
+			uint8_t n = f->len;
+
+			if (n > UART_FRAME_PAYLOAD) n = UART_FRAME_PAYLOAD;
+			for (i = 0; i < n; i++) logbuf[i] = (char)f->payload[i];
+			logbuf[n] = 0;
+			APP_DEBUG(DEBUG_LINKLOG_EN, "%s", logbuf);
+		}
+		break;
 	default:
 		return LNK_ST_UNSUPPORT;
 	}

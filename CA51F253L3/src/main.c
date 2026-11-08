@@ -281,12 +281,30 @@ static void Set_Win_Show(uint8_t cmd) {
 /* only when something actually changed (Settings_Persist skips an identical image); in the day hub there is         */
 /* nothing to store. Shared by the key exit and the 20 s idle timeout so both behave identically.                    */
 static void Sched_Set_Leave(void) {
+	uint8_t day;
+	uint8_t sorted = 0;
+	uint8_t mask = 0;
+
+	/* Normalize the whole week on the way out of the editor: the editor keeps */
+	/* the storage order the user typed and network days may arrive unsorted - */
+	/* ascending by time with empties last is the canonical form for the slot  */
+	/* icons and for z2m. A re-ordered day must be flashed and reported to     */
+	/* ZT3L even when this session itself edited nothing (sched_changed = 0),  */
+	/* hence the sorted flag joining the persist/send condition below.         */
+	for(day = 0; day < 7; day++) {
+		if(Sched_DaySort(Sched_DayRow(day))) {
+			mask |= (uint8_t)(1U << day);
+			sorted = 1;
+		}
+	}
+	sched_send_mask |= mask;
+
 	if(!sched_hub) {
 		Sched_Set_Store();                /* commit the current slot          */
-		if(sched_changed) {
-			if(Settings_Persist()) Sched_SendPending();
-			else sched_send_mask = 0;
-		}
+	}
+	if(sched_changed || sorted) {
+		if(Settings_Persist()) Sched_SendPending();
+		else sched_send_mask = 0;
 	}
 	Sched_Set_Exit();
 	DEBUG(BUTTONS_EN, { debug_puts("sched leave\r\n"); });
@@ -383,7 +401,8 @@ void main(void) {
 
 		WDFLG = 0xA5;
 		BTN_Scan();
-Uart1_Poll();                  /* decode any pending link frames */
+Uart1_Poll();                  /* decode any pending link frames        */
+Debug_Poll();                  /* ship one pending debug line (shallow) */
 if(!Ota_IsPending()) Link_Poll();
 if(!Ota_IsPending()) Temp_ErPoll();
 		Ota_Poll();                    /* OTA handoff to the XRAM flasher */
@@ -1005,6 +1024,7 @@ if(!Ota_IsPending()) Temp_ErPoll();
 				else {
 					Led_Weekday(RTC_GetWeek());     /* keep day-of-week in sync     */
 					Lock_Sym();                     /* remote lock                  */
+					Sched_SlotApply();              /* schedule-slot house of "now" */
 					Clock_Draw();
 					if (!adj_remain) {
 						Led_SymSet(SYM_HOME, ON);   /* house-with-thermometer on    */

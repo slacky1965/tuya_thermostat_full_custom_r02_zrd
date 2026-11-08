@@ -36,8 +36,26 @@ void Sched_Set_Next(void);
 void Sched_SendPending(void);
 void Sched_Set_Exit(void);
 uint8_t Sched_EntryValid(const schedule_t xdata *e);
-int16_t Sched_ActiveSetpoint(void);   /* setpoint in force right now     */
-extern int16_t xdata target_setpoint; /* control/display setpoint mirror */
+/* The schedule transition in force RIGHT NOW (weekly-curve rule, see           */
+/* sched_mode.c): today's last transition at or before the clock; before the    */
+/* day's first transition (or on an empty day) the last transition of the most  */
+/* recent previous day that has one, walking back up to 7 days; a completely    */
+/* empty week returns 0 - the caller falls back to the manual setpoint.         */
+/* Fills the day index (0..6, Mon=0) and the slot index (0..LNK_SCHED_N-1).     */
+/* Out-params are xdata pointers (like RTC_ReadTime): the targets must be       */
+/* XDATA_TMP statics - plain stack automatics got garbage stores on this        */
+/* toolchain.                                                                   */
+uint8_t Sched_FindActive(uint8_t xdata *day_out, uint8_t xdata *idx_out);
+/* Sort one weekly day in place: ascending by transition time, the unused     */
+/* slots (0xFFFF, larger than any valid minute) pushed to the end. Stable, so */
+/* equal times keep their storage order. Returns 1 when the order actually    */
+/* changed - the caller must then persist the day and report it to ZT3L, so   */
+/* the peer copy and the z2m view match the stored image.                     */
+uint8_t Sched_DaySort(schedule_t xdata *day);
+int16_t Sched_ActiveSetpoint(void);   /* setpoint in force right now                               */
+void Sched_SlotApply(void);           /* SYM_SP1..6: period that owns "now" (screen.c)             */
+extern int16_t xdata target_setpoint; /* control/display setpoint mirror                           */
+extern uint8_t xdata sched_slot_now;  /* 1-based active slot, 0=none (set by Sched_ActiveSetpoint) */
 
 /* ---- settings menu (src/menu_mode.c) ---- */
 #define MENU_OFF        0

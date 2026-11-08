@@ -8,14 +8,19 @@
 #include "include/mdu.h"
 #include "include/intrins.h"
 /*******************************************************************************
-	Lightweight polled UART0 debug output @115200 (P3.0 TX / P3.1 RX,
-	Timer2 as baudrate generator). No interrupts, no ring buffer - a few
-	tens of bytes against the vendor's interrupt uart_printf + 256 B buffer.
+	Lightweight debug output with TWO sinks, both gated by UART_DEBUG:
+	  * polled UART0 @115200 (P3.0 TX / P3.1 RX, Timer2 as baudrate generator,
+	    no interrupts, no ring buffer) - the J1 ISP header on this board;
+	  * the ZT3L link: every finished line is shipped as a fire-and-forget
+	    Report LNK_CMD_DEBUG_LOG (0xE0) so the peer's debug console shows the
+	    CA51F2 log without a UART wire (transport ported from r01).
 	Print gating lives in debug.h (BUTTONS_EN/LED_EN/...): call sites use
-	DBG_BUTTONS()/DBG_LED() wrappers which expand to nothing when 0.
+	the DEBUG(flag, ...) wrappers which expand to nothing when 0.
 ********************************************************************************/
 
 #if UART_DEBUG
+
+#include "include/link_proto.h"
 
 /* FOSC and the debug baudrate are compile-time constants, so the reload folds
    to a single number - no runtime 32-bit divide / MDU call (same approach as
@@ -24,6 +29,24 @@
    value the old divide produced.                                             */
 #define DEBUG_BAUDRATE  115200UL
 #define DEBUG_RELOAD    ((uint16_t)(0x10000UL - (FOSC / (DEBUG_BAUDRATE * 32UL))))
+
+/* One line per link frame (payload <= 64): buffer until '\n' or overflow.    */
+#define DBG_LINE_MAX    48
+
+static uint8_t xdata dbg_line[DBG_LINE_MAX];
+static uint8_t dbg_len;
+static uint8_t dbg_flushing;    /* 1 while a line is copied into the pending  */
+                                /* slot: a nested flush must not corrupt it   */
+
+/* Pending line: the ACTUAL frame send is deferred to Debug_Poll() in the main
+   loop. A direct send from a deep handler chain (OnFrame -> h_setting ->
+   settings_save -> print) can overflow the 256-byte 8051 stack and wreck the
+   TX ring state, so appending bytes stays cheap and shallow and only the main
+   loop owns the send. A line arriving while the slot is still busy is dropped
+   (bench loss is fine for a diagnostic stream).                              */
+static uint8_t xdata dbg_pending[DBG_LINE_MAX];
+static uint8_t dbg_pending_len;
+static uint8_t dbg_pending_valid;
 
 void debug_init(void) {
 	uint16_t value_temp;
@@ -40,12 +63,54 @@ void debug_init(void) {
 	TR2   = 1;
 
 	S0CON = 0x50;
+
+	dbg_len = 0;
+	dbg_flushing = 0;
+	dbg_pending_len = 0;
+	dbg_pending_valid = 0;
+}
+
+static void debug_flush(void) {
+	uint8_t i;
+
+	if(dbg_len == 0 || dbg_flushing) return;
+	if(dbg_pending_valid) {
+		/* previous line not yet shipped: drop the new one                    */
+		dbg_len = 0;
+		return;
+	}
+	dbg_flushing = 1;
+	for(i = 0; i < dbg_len; i++) {
+		dbg_pending[i] = dbg_line[i];
+	}
+	dbg_pending_len = dbg_len;
+	dbg_pending_valid = 1;
+	dbg_len = 0;
+	dbg_flushing = 0;
+}
+
+/* Ship the pending line - call from the main loop / boot pumps (shallow
+   context only; never from inside a debug print or a link handler).          */
+void Debug_Poll(void) {
+	if(!dbg_pending_valid) return;
+	Link_SendLog(dbg_pending, dbg_pending_len);
+	dbg_pending_valid = 0;
 }
 
 void debug_putc(uint8_t c) {
 	S0BUF = c;
 	while(!TI0);
 	TI0 = 0;
+
+	/* second sink: buffer the character for the link transport                */
+	if(dbg_flushing) return;            /* nested flush: drop, keep it shallow */
+	if(dbg_len >= DBG_LINE_MAX) {
+		debug_flush();                  /* oversized line: ship the prefix      */
+	}
+	dbg_line[dbg_len++] = c;
+	if(c == '\n') {
+		debug_flush();
+	}
 }
 
 /* -------- fixed-format primitives: no varargs, no format strings ----------- */

@@ -11,11 +11,13 @@ ZT3L_PORT := COM3
 subdir_ca51f2 := CA51F253L3
 subdir_tlsr := TLSR8258
 
+DEBUG ?= ON
+
 .PHONY: all subdir_build clean flash-cachip flash-orig-read-cachip flash-orig-write-cachip
 all: subdir_build
 subdir_build:
-	$(MAKE) -C $(subdir_ca51f2) all
-	$(MAKE) -C $(subdir_tlsr) all
+	$(MAKE) -C $(subdir_ca51f2) all DEBUG=$(DEBUG)
+	$(MAKE) -C $(subdir_tlsr) all DEBUG=$(DEBUG)
 
 bootloader:
 	$(MAKE) -C $(subdir_tlsr) clean
