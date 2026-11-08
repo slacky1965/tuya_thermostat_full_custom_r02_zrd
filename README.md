@@ -1,5 +1,8 @@
 # tuya_thermostat_full_custom_r02_zrd или Open Source Thermostat (OS Thermostat)
 
+[![](https://img.shields.io/badge/Repository-tuya__thermostat__full__custom__r02__zrd-blue.svg?logo=github)](https://github.com/slacky1965/tuya_thermostat_full_custom_r02_zrd)
+[![](https://img.shields.io/github/v/release/slacky1965/tuya_thermostat_full_custom_r02_zrd.svg)](https://github.com/slacky1965/tuya_thermostat_full_custom_r02_zrd/releases)
+
 **Автор не несет никакой ответственности, если вы, воспользовавшись этим проектом, 
 превратите свой умный термостат в полоумный. А также за возможный ущерб при 
 эксплуатации этого термостата.**
