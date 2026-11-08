@@ -25,6 +25,7 @@
 #include "include/buttons.h"
 #include "include/led.h"
 #include "include/ota.h"
+#include "include/modes.h"                   /* Sched_DaySort + sched_send_mask */
 //#include <string.h>
 /*******************************************************************************/
 /* Firmware identity (reported in LNK_CMD_INFO): identity lives in config.h.   */
@@ -443,8 +444,10 @@ static void h_time(link_ctx_t xdata *cx) {
 /* Payload: 6 entries x 4 B BE = { u16 transTime (minutes since midnight,       */
 /*          0xFFFF = unused), i16 heatTemp (x100 deg C) }.                      */
 /********************************************************************************/
-static schedule_t xdata *sched_day(uint8_t cmd) {
-	/* h_sched is registered only for LNK_CMD_SCHED_MON..SUN (0x20..0x26). */
+static schedule_t xdata *sched_row(uint8_t cmd) {
+	/* h_sched is registered only for LNK_CMD_SCHED_MON..SUN (0x20..0x26).   */
+	/* Named sched_row, not sched_day: modes.h owns the editor's sched_day   */
+	/* variable (this file pulls modes.h in for Sched_DaySort).              */
 	return Sched_DayRow((uint8_t)(cmd - LNK_CMD_SCHED_MON));
 }
 
@@ -459,7 +462,7 @@ static void h_sched(link_ctx_t xdata *cx) {
 	/* Validate every entry before touching the stored image. Unused slots      */
 	/* (minute == 0xFFFF) skip the temperature check: the host is allowed to    */
 	/* leave that field at any value (often 0) for a slot it does not use.      */
-	day = sched_day(f->cmd);
+	day = sched_row(f->cmd);
 	for(i = 0; i < LNK_SCHED_N; i++) {
 		uint16_t t = lnk_get16(pay + i * LNK_SCHED_ENTRY);
 		int16_t  h = (int16_t)lnk_get16(pay + i * LNK_SCHED_ENTRY + 2);
@@ -483,6 +486,7 @@ static void h_sched(link_ctx_t xdata *cx) {
 	}
 	{
 		uint8_t changed = 0;
+		uint8_t sorted;
 
 		for(i = 0; i < LNK_SCHED_N; i++) {
 			uint16_t t = lnk_get16(pay + i * LNK_SCHED_ENTRY);
@@ -494,9 +498,19 @@ static void h_sched(link_ctx_t xdata *cx) {
 				changed = 1;
 			}
 		}
-		if(changed && !settings_save()) {
+		/* Canonical order (ascending, empties last): z2m writes the transitions */
+		/* in whatever order it received them, while the display shows the slot  */
+		/* positions. A re-ordered day is persisted (even if the payload was     */
+		/* byte-identical to a still-unsorted stored image) and reported back    */
+		/* to ZT3L so its copy and the z2m view match. No loop: the peer only    */
+		/* applies the day and ACKs it.                                          */
+		sorted = Sched_DaySort(day);
+		if((changed || sorted) && !settings_save()) {
 			r->status = LNK_ST_FLASH;
 			return;
+		}
+		if(sorted) {
+			sched_send_mask |= (uint8_t)(1U << (f->cmd - LNK_CMD_SCHED_MON));
 		}
 	}
 }

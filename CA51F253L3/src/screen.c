@@ -278,14 +278,17 @@ uint8_t Screen_ModeFree(void) {
 	                 menu_set == MENU_OFF);
 }
 
-/* Light the schedule-slot house of the transition that owns "now". The index    */
-/* comes from Sched_ActiveSetpoint's single walk of the day rows (it refreshes   */
-/* sched_slot_now as a side effect and shares the greatest-minute criterion      */
-/* with CONTROL, so the lit house is always the slot feeding the relay - a       */
-/* self-contained second copy of the walk cost +346 B clang / +310 B SDCC and    */
-/* overflowed the SDCC ROM). Encoding: 1-based, 0 = none, which survives         */
-/* xdata_clear(). All six houses are off in MANUAL mode and before the day's     */
-/* first transition. The schedule editor draws its own blinking slot.            */
+/* Light the schedule-slot house of the transition that owns "now" under the   */
+/* weekly-curve rule: today's last passed transition, else - before the day's  */
+/* first transition or on an empty day - the last transition of the most       */
+/* recent programmed day (up to 7 days back; see Sched_FindActive). The index  */
+/* comes from Sched_ActiveSetpoint's resolve of the shared resolver (it        */
+/* refreshes sched_slot_now as a side effect and shares the greatest-minute    */
+/* criterion with CONTROL, so the lit house is always the slot feeding the     */
+/* relay - a self-contained second copy of the walk cost +346 B clang / +310 B */
+/* SDCC and overflowed the SDCC ROM). Encoding: 1-based, 0 = none, which       */
+/* survives xdata_clear(). All six houses are off in MANUAL mode and when the  */
+/* whole week is empty. The schedule editor draws its own blinking slot.       */
 void Sched_SlotApply(void) {
 	uint8_t i;
 
