@@ -35,6 +35,10 @@ void Sched_Set_Store(void);
 void Sched_Set_Next(void);
 void Sched_SendPending(void);
 void Sched_Set_Exit(void);
+/* Network wrote a whole day while its editor may be open: close the editor   */
+/* without Store (the slot registers/cursor are stale) so the network value   */
+/* is not overwritten. Called by h_sched after the day is applied and saved.  */
+void Sched_NetPreempt(uint8_t day);
 uint8_t Sched_EntryValid(const schedule_t xdata *e);
 /* The schedule transition in force RIGHT NOW (weekly-curve rule, see           */
 /* sched_mode.c): today's last transition at or before the clock; before the    */

@@ -487,6 +487,7 @@ static void h_sched(link_ctx_t xdata *cx) {
 	{
 		uint8_t changed = 0;
 		uint8_t sorted;
+		uint8_t dayno = (uint8_t)(f->cmd - LNK_CMD_SCHED_MON);
 
 		for(i = 0; i < LNK_SCHED_N; i++) {
 			uint16_t t = lnk_get16(pay + i * LNK_SCHED_ENTRY);
@@ -510,7 +511,13 @@ static void h_sched(link_ctx_t xdata *cx) {
 			return;
 		}
 		if(sorted) {
-			sched_send_mask |= (uint8_t)(1U << (f->cmd - LNK_CMD_SCHED_MON));
+			sched_send_mask |= (uint8_t)(1U << dayno);
+		}
+		if(changed || sorted) {
+			/* the stored day changed under a possibly open editor: close it  */
+			/* without Store, so stale slot registers cannot overwrite the    */
+			/* network value (the network wins).                              */
+			Sched_NetPreempt(dayno);
 		}
 	}
 }
