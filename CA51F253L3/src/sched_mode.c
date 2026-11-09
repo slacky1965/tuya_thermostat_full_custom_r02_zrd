@@ -164,6 +164,8 @@ void Sched_Set_Enter(void) {
 /* Advance: hours -> minutes -> temperature -> next slot; after slot 5 save the */
 /* finished day and move to the next one. After Sunday, leave the mode (saved). */
 void Sched_Set_Next(void) {
+	uint8_t sorted = 0;
+
 	if(sched_field < SCHED_FLD_TEMP) {
 		sched_field++;
 		Sched_Set_Draw();
@@ -178,9 +180,20 @@ void Sched_Set_Next(void) {
 		Sched_Set_Draw();
 		return;
 	}
-	/* last slot of the day: save the finished day and return to the day-      */
-	/* select hub with the NEXT day preselected (UP/DOWN then jump anywhere).  */
-	if(sched_changed) {
+	/* last slot of the day: normalize the finished day BEFORE persisting and  */
+	/* reporting it - the editor kept the storage order the user typed, and    */
+	/* the canonical ascending order is what the slot icons and z2m must see.  */
+	/* Sorted here, after Store (the sched_slot cursor is done with this day), */
+	/* so a day closed with "next to the end" reaches flash and ZT3L already   */
+	/* ordered. The Sunday branch below exits through Sched_Set_Exit, which    */
+	/* bypasses Sched_Set_Leave - this is the only normalize point for it.     */
+	if(Sched_DaySort(Sched_DayRow(sched_day))) {
+		sorted = 1;
+		sched_send_mask |= (uint8_t)(1U << sched_day);
+	}
+	/* save the finished day and return to the day-select hub with the NEXT    */
+	/* day preselected (UP/DOWN then jump anywhere).                           */
+	if(sched_changed || sorted) {
 		if(Settings_Persist()) Sched_SendPending();
 		else sched_send_mask = 0;
 	}
@@ -199,6 +212,38 @@ void Sched_Set_Exit(void) {
 	sched_set = SCHED_SET_OFF;
 	Led_SymInit();                        /* clear the SP slot / weekday icons */
 	Thermo_Apply();
+}
+
+/* The network replaced a whole day. A network day write that really changes   */
+/* the stored image abandons the WHOLE clock/schedule setup (owner rule):      */
+/* the pending clock edit is discarded (only the network data is kept), the    */
+/* day-select hub closes (there is nothing to protect there), and a same-day   */
+/* editor closes WITHOUT Store - its slot registers and sched_slot cursor no   */
+/* longer describe the stored image (the array was overwritten and possibly    */
+/* re-ordered), so a late Store would write stale registers over the freshly   */
+/* applied day. A different day's editor is left untouched. Local edits of     */
+/* the preempted context are intentionally dropped - the network value wins    */
+/* (and it is already in flash, saved by h_sched); days edited earlier in the  */
+/* session were persisted when they were closed. Called by h_sched AFTER the   */
+/* day is applied, sorted and saved.                                           */
+void Sched_NetPreempt(uint8_t day) {
+	if(clk_set != CLK_SET_OFF) {
+		Clock_Set_Exit(0);              /* drop the pending clock edit        */
+		return;
+	}
+	if(sched_set == SCHED_SET_OFF) {
+		return;                         /* no schedule editor open            */
+	}
+	if(sched_hub) {
+		sched_changed = 0;              /* network wins; the hub owns no slot */
+		Sched_Set_Exit();               /* registers, so plain close          */
+		return;
+	}
+	if(sched_day != day) {
+		return;                         /* a different day is being edited    */
+	}
+	sched_changed = 0;                  /* the day now comes from the network  */
+	Sched_Set_Exit();                   /* sched_set=OFF, icons clear, reapply */
 }
 
 /* A schedule entry counts as used only if it is sane: not the explicit empty   */
